@@ -1,5 +1,33 @@
 from datetime import datetime
 
+class User:
+    users = {}  # Dictionary to store all users
+
+    def __init__(self, username, age=None, first_name=None, last_name=None, email=None, user_type="User"):
+        self.username = username
+        self.age = age
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.user_type = user_type
+        self.blocked = False
+        User.users[username] = self  # Add the user to the dictionary
+class Patient(User):
+    def __init__(self, username, age, address):
+        super().__init__(username, age)
+        self.address = address
+        self.assigned_mhwp = None
+        self.appointments = []  # List of confirmed bookings
+
+class MHWP(User):
+    def __init__(self, username, experience, specialization):
+        super().__init__(username, first_name=None, last_name=None, email=None, user_type="MHWP")
+        self.experience = experience
+        self.specialization = specialization
+        self.patients_list = []  # List of assigned patients
+        self.appointments = []  # List of confirmed bookings
+
+
 class Admin(User):
     # Maybe add admin levels? giving different kind of authhority
     def __init__(self, first_name, last_name, username, email):
@@ -58,23 +86,36 @@ class Admin(User):
                 print(f"{user.username:<15} {'MHWP':<10} {'N/A':<15} {len(user.appointments):<10}")
         print("--------------")
 
-# # Example Usage
-# # Assuming we have already initialized some users
-# admin = Admin("Alice", "Johnson", "admin1", "alice@example.com")
-# mhwp1 = MHWP("Bob", "Smith", "mhwp1", "bob@example.com")
-# patient1 = Patient("John", "Doe", "patient1", "john@example.com")
 
-# # Allocate a patient to an MHWP
-# admin.allocate_patient_to_mhwp(patient1, mhwp1)
+# Create an Admin user
+admin = Admin(first_name="Alice", last_name="Johnson", username="admin1", email="alice@example.com")
 
-# # Edit patient's contact information
-# admin.edit_user_info(patient1, email="newjohn@example.com")
+# Create an MHWP and two Patients
+mhwp1 = MHWP(username="mhwp1", experience=5, specialization="Therapist")
+patient1 = Patient(username="patient1", age=30, address="123 Elm Street")
+patient2 = Patient(username="patient2", age=25, address="789 Oak Street")
 
-# # Disable a user
-# admin.disable_user(patient1)
+# Allocate both patients to the MHWP
+print("\nAllocating Patients to the MHWP:")
+admin.allocate_patient_to_mhwp(patient1, mhwp1)
+admin.allocate_patient_to_mhwp(patient2, mhwp1)
 
-# # Delete a user
-# admin.delete_user(patient1)
+# Edit the first patient's contact information
+print("\nEditing First Patient's Contact Information:")
+admin.edit_user_info(patient1, email="newjohn@example.com", address="456 Maple Avenue")
 
-# # Display summary of all users
-# admin.display_summary()
+# Edit the second patient's contact information
+print("\nEditing Second Patient's Contact Information:")
+admin.edit_user_info(patient2, email="secondpatient@example.com", address="987 Pine Street")
+
+# Disable the first patient
+print("\nDisabling the First Patient:")
+admin.disable_user(patient1)
+
+# Delete the second patient
+print("\nDeleting the Second Patient:")
+admin.delete_user(patient2)
+
+# Display summary of all users
+print("\nDisplaying Summary of All Users:")
+admin.display_summary()
