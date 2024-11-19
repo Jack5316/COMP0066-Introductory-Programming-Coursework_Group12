@@ -12,6 +12,7 @@ from datetime import datetime
         # self.user_type = user_type
         # self.blocked = False
         # User.users[username] = self  # Add the user to the dictionary
+        # random comment - DELETE THIS
 
 
 
