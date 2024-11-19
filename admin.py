@@ -55,6 +55,7 @@ class Admin(User):
         
         
         user.blocked=True #USER BLOCKED ATTRIBUTE NOW = TRUE
+        print(f"User {user.username} has been disabled")
 
 
 
@@ -66,3 +67,7 @@ class Admin(User):
         print("\nAllocations:")
         for patient, mhwp in self.allocations.items(): #LOOPING THROUGH ALLOCATIONS DICTIONARY TO GET ALL PATIENT-MHWP MAPPINGS
             print(f"Patient: {patient}, MHWP: {mhwp}")
+
+
+
+print("lolololol")
