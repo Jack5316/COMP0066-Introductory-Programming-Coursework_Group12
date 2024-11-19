@@ -1,31 +1,39 @@
 from datetime import datetime
 
-class User:
-    users = {}  # Dictionary to store all users
+#class User:
+    #users = {}  # Dictionary to store all users
 
-    def __init__(self, username, age=None, first_name=None, last_name=None, email=None, user_type="User"):
-        self.username = username
-        self.age = age
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.user_type = user_type
-        self.blocked = False
-        User.users[username] = self  # Add the user to the dictionary
-class Patient(User):
-    def __init__(self, username, age, address):
-        super().__init__(username, age)
-        self.address = address
-        self.assigned_mhwp = None
-        self.appointments = []  # List of confirmed bookings
+    #def __init__(self, username, age=None, first_name=None, last_name=None, email=None, user_type="User"):
+        # self.username = username
+        # self.age = age
+        # self.first_name = first_name
+        # self.last_name = last_name
+        # self.email = email
+        # self.user_type = user_type
+        # self.blocked = False
+        # User.users[username] = self  # Add the user to the dictionary
 
-class MHWP(User):
-    def __init__(self, username, experience, specialization):
-        super().__init__(username, first_name=None, last_name=None, email=None, user_type="MHWP")
-        self.experience = experience
-        self.specialization = specialization
-        self.patients_list = []  # List of assigned patients
-        self.appointments = []  # List of confirmed bookings
+
+
+
+#class Patient(User):
+    #def __init__(self, username, age, address):
+        #super().__init__(username, age)
+        #self.address = address
+        #self.assigned_mhwp = None
+        #self.appointments = []  # List of confirmed bookings
+
+#class MHWP(User):
+    #def __init__(self, username, experience, specialization):
+        #super().__init__(username, first_name=None, last_name=None, email=None, user_type="MHWP")
+        #self.experience = experience
+        #self.specialization = specialization
+        #self.patients_list = []  # List of assigned patients
+        #self.appointments = []  # List of confirmed bookings}
+
+
+
+
 
 
 class Admin(User):
