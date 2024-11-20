@@ -1,10 +1,9 @@
 from time import gmtime, strftime
 
-import user
-
-class Patient(user.User):
+from user import User
+class Patient(User):
     def __init__(self,first_name,last_name,email,user_type,username,password, mhwpAsigned, emergencyEmail, colourCode):
-        user.User.__init__(self,first_name,last_name,email,user_type,username,password)
+        super().__init__(first_name,last_name,email,user_type,username,password)
         self.mhwpAsigned = mhwpAsigned
         self.mood = []
         self.journalEntries = []
@@ -79,7 +78,7 @@ class Patient(user.User):
                 elif appointmentYear == 2:
                     appointmentYear = currentYear + 1
                     break
-            except:
+            except ValueError:
                 print("Please enter a valid number")
     
         allMonths = {1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"}
@@ -89,64 +88,87 @@ class Patient(user.User):
             inputMonthText = ""
             for key in allMonths.keys():
                 if key >= currentMonth:
-                    inputMonthText = inputMonthText + str(key) + " - " + allMonths[key] + "\n"
+                    inputMonthText = inputMonthText + " " + str(key) + " - " + allMonths[key] + "\n"
 
         # if appointment year is next year then just show all months
         else:
             inputMonthText = ""
             for key in allMonths.keys():
                 inputMonthText = inputMonthText + str(key) + " - " + allMonths[key] + "\n"
-                
-        print("Enter the month you would like to book the appointment for: ")
 
-        # below you get stuck into an infinite loop when using the next year 
-        # may be best to redesign how this works cause it is very confusing to read 
+
+        print("Enter the month you would like to book the appointment for: ")
         while True:
             try:
                 appointmentMonth = int(input(inputMonthText))
-                if appointmentMonth > 12 or appointmentMonth < 1:
-                    print("Enter a valid number: ")
-                elif appointmentMonth >= currentMonth and currentYear == appointmentYear:
-                    break
-                else:
-                    while appointmentMonth < currentMonth and currentYear == appointmentYear:
-                        print("Enter a valid month in the future: ")
-                        appointmentMonth = int(input(inputMonthText))
-                        if appointmentMonth >= currentMonth and currentYear == appointmentYear:
-                            break
+                if not (1 <= appointmentMonth <= 12):
+                    print("Enter a valid number between 1 and 12.")
+                    continue
 
-            except:
+                if currentYear == appointmentYear and appointmentMonth < currentMonth:
+                    print("Enter a valid month in the future.")
+                    continue
+                    
+                break
+
+            except ValueError:
                 print("Please enter a valid number: ")
+        
+        
+        daysInMonth = {1: 31,2: 28,3: 31,4: 30,5: 31,6: 30,7: 31,8: 31,9: 30,10: 31,11: 30,12: 31}
+        leapFlag = False
+        # check for leap year
+        if appointmentYear % 4 == 0 and (appointmentYear % 100 != 0 or appointmentYear % 400 == 0):
+            leapFlag = True
+        
+        # get number of days in month
+        daysInSelectedMonth = daysInMonth[appointmentMonth]
+        if leapFlag and appointmentMonth == 2:
+            daysInSelectedMonth += 1 
+        
+        # if user is booking an appointment for the same month then only show them today onwards
+        sameMonth = False
+        if currentMonth == appointmentMonth and currentYear == appointmentYear:
+            sameMonth = True
+        earliestDay = 1
+        if sameMonth:
+            earliestDay = currentDay
 
-        return appointmentYear
+        # collect day from user
+        while True:
+            try:
+                appointmentDay = int(input("Enter the desired date of your appointment [{0} - {1}]:\n".format(earliestDay,daysInSelectedMonth)))
+                if not (earliestDay <= appointmentDay <= daysInSelectedMonth):
+                    print("Enter a valid number between {0} and {1}.".format(earliestDay,daysInSelectedMonth))
+                    continue
+                break
+            except ValueError:
+                print("Please enter a valid number. ")
 
+        if appointmentDay < 10:
+            appointmentDay = "0" + str(appointmentDay)
+        if appointmentMonth < 10:
+            appointmentMonth = "0" + str(appointmentMonth)
 
+        
+        return "{0}-{1}-{2}".format(appointmentYear,appointmentMonth,appointmentDay)
 
     def bookAppointment(self):
         # appointment assumptions 
-        # every appointment is 30 mins (could add in varying appointment times, i.e. 15mins, 30mins, 45mins, 1hr)
-        # each one begins at the time specified 
-        # if doing this then include the appointment length in the appointment object
-
+        # every appointment is 1hr
         # could potentially change this to fetch dates within a range
-    
-        answer = patient.getUserAppointmentDate()
-        print(answer)
 
+        appointmentDate = Patient.getUserAppointmentDate()
 
-        appointmentDate = input("Please enter the date you want to view availability (YYYY-MM-DD): ")
-        
-        # when getting date input check for leap years and the days in the month 
-
-
-        # need to do error checking to make sure a valid date has been inputted
-        # also check and make sure the appointment is reasonable 
-
-
-        # for now just use a hardcoded calendar
         # UPDATE THIS TO USE THE ACTUAL CALENDAR
         mhwpCalendar = [] 
 
+        # UPDATE THESE SO THAT THEY PULL FROM THE MHWP OBJECT
+        # block out times outside the mhwp's Working hours
+        mhwpStart = 9
+        mhwpFinish = 17
+
+        # check and see if user has appointments on the same day
         patientConflictingAppointments = []
 
         for datetime in self.patientCalendar:
@@ -156,56 +178,95 @@ class Patient(user.User):
                 patientConflictingAppointments.append(datetime[0])
 
         if patientConflictingAppointments:
-            print("You already have the following appointments on the date {0}".format(appointmentDate))
+            print("You already have the following appointments on the date {0}: ".format(appointmentDate))
             for appointment in patientConflictingAppointments:
                 print(appointment)
         
         flag = True
-        while flag:
+        confirmation = False
+
+        while flag and patientConflictingAppointments:
             # confirm if patient would still like to book an appointment 
             yes_no = {1:"Yes", 2: "No"}
             try:
-                confirmation = int(input("Would you still like to book a new appointment: {0}".format(yes_no)))
+                confirmation = int(input("Would you still like to book a new appointment for this day: {0}".format(yes_no)))
                 if confirmation not in yes_no:
                     print("Please only enter 1 OR 2 depending on your selection.")
-                else:
-                    flag = False
+                    continue
+                break
             except ValueError:
                 print("Please enter a valid number.")
 
-        # filter MHWP calendar to get only appointments on date selected
-        potentialDates = []
-        for datetime in mhwpCalendar:
+        if confirmation and confirmation == 2:
+            print("No appointment has been made")
+            return 
 
+        # filter MHWP calendar to get only appointments on date selected
+        currentMHWPAppointments = []
+        for datetime in mhwpCalendar:
             # this assumes that the first value is the appointment date 
             # also need to remove the time element of the string 
-            if datetime[0] == appointmentDate and datetime[0] not in patientConflictingAppointments:
-                potentialDates.append(datetime[0])
+            if datetime[0] == appointmentDate:
+                currentMHWPAppointments.append(datetime[0])
         
+        # find potential times 
+        potentialTimes = []
+        while mhwpStart <= mhwpFinish:
+            if mhwpStart not in currentMHWPAppointments:
+                    potentialTimes.append(mhwpStart)
+            mhwpStart += 1
+        
+        # show user potential times and get input 
+        enumPotentialTimes = list(enumerate(potentialTimes,1))
+        print("Avaliable times are: ")
+        for index,time in enumPotentialTimes:
+            print(str(index) + " - " + str(time)+":00")
+        
+        while True:
+            try:
+                selectedTime = int(input("Select one of the available times: \n"))
+                if 1 <= selectedTime <= len(potentialTimes):
+                    selectedTime = enumPotentialTimes[(selectedTime - 1)][1]
+                    print("You have selected the time: {0}:00".format(selectedTime))
+                    break 
+                else:
+                    print("Please select a valid option from the list.")    
+            except ValueError:
+                print("Please enter a valid integer ")
+        
+        if selectedTime < 10:
+            selectedTime = "0" + str(selectedTime) 
 
+        finalTime = "{0} {1}:00".format(appointmentDate,selectedTime)
 
-        # need to check for availability of patient 
-        # 
+        # CREATE THE APPOINTMENT IN THE FOLLOWING LINE 
+        # newAppointment = Appointment()
 
-        pass
-    #selection done on MHWP'S calendar
-    #option for day or week view
-    # booked appointment needs to be confirmed by MHWP
-    #allow to send short message to MHWP for reason of appointment
-    #email update
+        self.patientCalendar.append([finalTime,newAppointment])
+        print("Appointment has been booked for the following time and date: [{0}]".format (finalTime))
 
-    def cancelAppointment(self):
-        pass
-    # selection done on MHWP'S calendar
+    # allow to send short message to MHWP for reason of appointment
     # email update
 
-    def emailUpdate(self):
-        pass
-    # either done by the patint or MHWP
+    def cancelAppointment(self,appointmentInstance):
+        appointmentInstance.cancel()
+        # send email update 
+        # cancelling an appointment should go into both patient and mhwp calendars and remove them 
 
     def getRecord(self):
-        return self.healthRecord
+        outputString = "{0} {1}".format(self.first_name,self.last_name)
+        outputString += "-- Conditions --\n"
+        # list all conditions
+        for condition in self.conditions:
+            outputString += "{0}\n".format(condition)
+        
+        outputString += "-- Notes --\n"
+        # list all notes
+        for indivdualNote in self.notes:
+            outputString += ("{0} at {1}\n".format(indivdualNote[2],indivdualNote[0]))
+            outputString += ("{0}".format(indivdualNote[1]))
 
+        print(outputString)
 
     @classmethod
     def searchExercises(cls):
@@ -229,20 +290,19 @@ class Patient(user.User):
                     print("Sorry, we could not find any resources to match your search term. Some suggestions are 'mindfulness' or 'meditation'.")
 
 
-patient = Patient("hannah","zhao","h@gmail.com",user_type="patient",username="han",password="881",mhwpAsigned="drhannah",
-                  emergencyEmail="hannahzhao2@han.com",
-                  colourCode=None)
-
+# patient = Patient("hannah","zhao","h@gmail.com",user_type="patient",username="han",password="881",mhwpAsigned="drhannah",
+#                   emergencyEmail="hannahzhao2@han.com",
+#                   colourCode=None)
 
 
 # patient.updateEmergencyContact()
 # patient.searchExercises()
 # patient.moodTracker()
 # patient.journal()
-patient.bookAppointment()
+# patient.bookAppointment()
 
 
 # Each calendar object is: [YYYY-MM-DD HH:MM:SS]
 
-
+# add mhwp name to each list in notes (so it is [time,commments,mhwp_name])
 
