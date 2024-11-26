@@ -1,43 +1,86 @@
 from datetime import datetime
-from user import User
+# from user import User
 
-class MHWP(User):
+class MHWP(): #input is User
     def __init__(self, first_name, last_name, email, user_type, username, password):
-
-        # #Initialize MHWP instance, inheriting from the User class.
-        # Aruments:
-        #     first_name (str): First name of the MHWP.
-        #     last_name (str): Last name of the MHWP.
-        #     email (str): Email address of the MHWP.
-        #     user_type (str): Type of user (e.g., 'MHWP').
-        #     username (str): Username for login.
-        #     password (str): Password for login.
-        # Ensures that all the attributes defined in the parent class(User) are properly initialized when an MHWP object is created.
-
-        super().__init__(first_name, last_name, email, user_type, username, password)
+        # super().__init__(first_name, last_name, email, user_type, username, password)
+        self.patients = {}  # Dictionary to store patient information.
         self.all_patients = []  # List to store all Patient objects.
         self.appointment_calendar = {}  # Dictionary to store appointments.
-        self.working_hours = {"start": "09:00", "end": "17:00"}  # MWWP working hours.
+        self.working_hours = {"start": "09:00", "end": "17:00"}  # MHWP working hours.
 
     def display_calendar(self, start_time, end_time):
-        #Display appointments scheduled within a given timeframe.
+        # Display appointments scheduled within a given timeframe.
         pass
 
     def cancel_appointment(self, appointment_time):
-        #Cancel an appointment at a specified time.
-        #Updates the appointment calendar and notifies the patient.
+        # Cancel an appointment at a specified time.
         pass
 
     def confirm_appointment(self, appointment_time):
-        #confirm an appointment at a specified time.
-        #Updates the appointment calendar and notifies the patient.
+        # Confirm an appointment at a specified time.
         pass
 
+    def display_conditions(self, predefined_conditions):
+        print("Please select a condition from the following list:")
+        for i, condition in enumerate(predefined_conditions, start=1):
+            print(f"{i}. {condition}")
+
+    def add_patient_info(self, patient_email, notes, mood):
+        predefined_conditions = ['anxiety', 'autism', 'depression', 'bipolar disorder', 'OCD', 'PTSD']
+        self.display_conditions(predefined_conditions)
+
+        # User selects a condition
+        try:
+            choice = int(input("Enter the number of the condition: "))
+            if 1 <= choice <= len(predefined_conditions):
+                condition = predefined_conditions[choice - 1]
+            else:
+                print("Invalid choice. No condition selected.")
+                return
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+            return
+
+        # Initialize patient data if not already present
+        if patient_email not in self.patients:
+            self.patients[patient_email] = {'conditions': [], 'notes': [], 'mood': []}
+
+        # Add valid condition, notes, and mood
+        self.patients[patient_email]['conditions'].append(condition)
+        self.patients[patient_email]['notes'].append(notes)
+        self.patients[patient_email]['mood'].append(mood)
+
+    def display_patients_with_moods(self):
+        mood_colors = {
+            1: "\033[91m",  # Red for very bad mood
+            2: "\033[93m",  # Yellow for bad mood
+            3: "\033[92m",  # Green for neutral mood
+            4: "\033[96m",  # Cyan for good mood
+            5: "\033[94m",  # Blue for very good mood
+        }
+        reset_color = "\033[0m"  # Reset color to default
+
+        print("\033[1mPatient Mood Tracker\033[0m")  # Bold header
+        print("-" * 30)
+        for email, data in self.patients.items():
+            if data["mood"]:
+                current_mood = data["mood"][-1]  # Use the last mood value
+                mood_color = mood_colors.get(current_mood, reset_color)
+            else:
+                current_mood = "No mood data"
+                mood_color = reset_color
+            
+            print(
+                f"{mood_color}Email: {email}\n"
+                f"Current Mood: {current_mood}\033[0m\n"  # Reset color after each section
+            )
+            print("-" * 30)
+
     def update_patient_health_record(self, patient, new_entry):
-        #Add a new entry to the specified patient's health record.
+        # Add a new entry to the specified patient's health record.
         pass
 
     def display_summary_of_all_patients(self):
-        #Display a summary of all patients, including mood tracking plots.
-        #Iterates through the list of patients and collates data.
+        # Display a summary of all patients, including mood tracking plots.
         pass
