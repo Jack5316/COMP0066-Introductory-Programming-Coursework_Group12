@@ -14,6 +14,7 @@ class Patient(User):
         self.colourCode = colourCode
 
     def moodTracker(self):
+        #LINK TO PRACTITIONER
         moods = {"Dark Green": "Very Happy", "Light Green": "Happy", "Yellow":"Positive Neutral", "Orange":"Negative Neutral", "Light Red":"Sad", "Dark Red":"Very Sad"}
         moodColours = {1:"Dark Green", 2:"Light Green", 3:"Yellow", 4:"Orange", 5:"Light Red", 6:"Dark Red"}
 
@@ -254,6 +255,7 @@ class Patient(User):
         # cancelling an appointment should go into both patient and mhwp calendars and remove them 
 
     def getRecord(self):
+        #LINK TO PRACTITIONER
         outputString = "{0} {1}".format(self.first_name,self.last_name)
         outputString += "-- Conditions --\n"
         # list all conditions
