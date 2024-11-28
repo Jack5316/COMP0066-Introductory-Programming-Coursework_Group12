@@ -218,7 +218,7 @@ class Patient(User):
 
         # find potential times based on MHWP calendar
         potentialTimes = []
-        while mhwpStart <= mhwpFinish:
+        while mhwpStart < mhwpFinish:
             if mhwpStart not in currentMHWPAppointments:
                     potentialTimes.append(mhwpStart)
             mhwpStart += 1

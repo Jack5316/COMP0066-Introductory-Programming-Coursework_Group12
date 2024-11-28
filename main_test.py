@@ -16,5 +16,3 @@ example_date = patient.bookAppointment()
 
 
 new_appointment = Appointment(patient=patient, mhwp=practioner, date_time=example_date)
-
-
