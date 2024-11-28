@@ -1,15 +1,17 @@
 from time import gmtime, strftime
-
 from user import User
+from datetime import datetime 
+
+
 class Patient(User):
     def __init__(self,first_name,last_name,email,user_type,username,password, mhwpAsigned, emergencyEmail, colourCode):
         super().__init__(first_name,last_name,email,user_type,username,password)
         self.mhwpAsigned = mhwpAsigned
         self.mood = []
         self.journalEntries = []
-        self.patientCalendar = []
+        self.patientCalendar = {}   # each calendar entry is: {"YYYY-MM-DD HH:MM" : appointmentObject}
         self.conditions = []
-        self.notes = []
+        self.notes = []     # each notes entry is in form [time,commments,mhwp_name]
         self.emergencyEmail = emergencyEmail
         self.colourCode = colourCode
 
@@ -61,7 +63,6 @@ class Patient(User):
                 self.emergencyEmail=updatedEmergencyEmail
                 print("Your details have been successfuly updated.")
                 break
-
 
     @staticmethod
     def getUserAppointmentDate():
@@ -145,40 +146,40 @@ class Patient(User):
             except ValueError:
                 print("Please enter a valid number. ")
 
-        if appointmentDay < 10:
-            appointmentDay = "0" + str(appointmentDay)
-        if appointmentMonth < 10:
-            appointmentMonth = "0" + str(appointmentMonth)
-
-        
-        return "{0}-{1}-{2}".format(appointmentYear,appointmentMonth,appointmentDay)
+        appointmentDate = datetime(appointmentYear, appointmentMonth, appointmentDay)
+        return appointmentDate
 
     def bookAppointment(self):
-        # appointment assumptions 
-        # every appointment is 1hr
-        # could potentially change this to fetch dates within a range
+        """
+        Returns the time a patient wants an appointment for. No input paramaters required.
+        Checks the calendar of the MHWP for any conflicts.
+        Also ensures the desired date is in the future.
 
+        Returns:
+        str: The finalized appointment datetime in the format 
+            "YYYY-MM-DD HH:00", OR False if no appointment is booked.
+        """
+        
         appointmentDate = Patient.getUserAppointmentDate()
 
-        # UPDATE THIS TO USE THE ACTUAL CALENDAR
-        mhwpCalendar = [] 
-
-        # UPDATE THESE SO THAT THEY PULL FROM THE MHWP OBJECT
-        # block out times outside the mhwp's Working hours
-        mhwpStart = 9
-        mhwpFinish = 17
+        # pull out working hours of mhwp
+        mhwpStart = self.mhwpAsigned.working_hours["start"].split(":")[0]
+        mhwpStart = int(mhwpStart)
+        mhwpFinish = self.mhwpAsigned.working_hours["end"].split(":")[0]
+        mhwpFinish = int(mhwpFinish)
 
         # check and see if user has appointments on the same day
         patientConflictingAppointments = []
 
-        for datetime in self.patientCalendar:
-            # this assumes that the the first entry is the actual time 
-            # also need to remove the time part from datetime
-            if datetime[0] == appointmentDate:
-                patientConflictingAppointments.append(datetime[0])
+        for appointmentDatetime in self.patientCalendar.keys():
+            # remove the time part from datetime
+            # convert to each one to a datetime object in format (YYYY-MM-DD)
+            currentAppointmentOccurence = appointmentDatetime.split(" ")[0]
+            if currentAppointmentOccurence == datetime.strftime(appointmentDate,"%Y-%m-%d"):
+                patientConflictingAppointments.append(appointmentDatetime)
 
         if patientConflictingAppointments:
-            print("You already have the following appointments on the date {0}: ".format(appointmentDate))
+            print("You already have the following appointments on the date {0}: ".format(datetime.strftime(appointmentDate,"%Y-%m-%d")))
             for appointment in patientConflictingAppointments:
                 print(appointment)
         
@@ -188,8 +189,11 @@ class Patient(User):
         while flag and patientConflictingAppointments:
             # confirm if patient would still like to book an appointment 
             yes_no = {1:"Yes", 2: "No"}
+            print("Would you still like to book a new appointment for this day:")
             try:
-                confirmation = int(input("Would you still like to book a new appointment for this day: {0}".format(yes_no)))
+                for key, value in yes_no.items():
+                    print("{0} - {1}".format(key,value))
+                confirmation = int(input("Enter your choice: "))
                 if confirmation not in yes_no:
                     print("Please only enter 1 OR 2 depending on your selection.")
                     continue
@@ -199,19 +203,22 @@ class Patient(User):
 
         if confirmation and confirmation == 2:
             print("No appointment has been made")
-            return 
+            return False
 
+        mhwpCalendar = self.mhwpAsigned.appointment_calendar 
+    
         # filter MHWP calendar to get only appointments on date selected
         currentMHWPAppointments = []
-        for datetime in mhwpCalendar:
-            # this assumes that the first value is the appointment date 
-            # also need to remove the time element of the string 
-            if datetime[0] == appointmentDate:
-                currentMHWPAppointments.append(datetime[0])
-        
-        # find potential times 
+        for mhwpDatetime in mhwpCalendar.keys():
+            # split the MHWP datetime string into the date and time 
+            currentAppointmentOccurence = mhwpDatetime.split(" ")
+            if currentAppointmentOccurence[0] == datetime.strftime(appointmentDate,"%Y-%m-%d"):
+                # append the taken time to list IF the date is the same
+                currentMHWPAppointments.append(int(currentAppointmentOccurence[1].split(":")[0]))
+
+        # find potential times based on MHWP calendar
         potentialTimes = []
-        while mhwpStart <= mhwpFinish:
+        while mhwpStart < mhwpFinish:
             if mhwpStart not in currentMHWPAppointments:
                     potentialTimes.append(mhwpStart)
             mhwpStart += 1
@@ -237,14 +244,12 @@ class Patient(User):
         if selectedTime < 10:
             selectedTime = "0" + str(selectedTime) 
 
-        finalTime = "{0} {1}:00".format(appointmentDate,selectedTime)
+        appointmentDate = datetime.strftime(appointmentDate,"%Y-%m-%d")
+        finalDateTime = "{0} {1}:00".format(appointmentDate,selectedTime)
 
-        # CREATE THE APPOINTMENT IN THE FOLLOWING LINE 
-        # newAppointment = Appointment()
-
-        self.patientCalendar.append([finalTime,newAppointment])
-        print("Appointment has been booked for the following time and date: [{0}]".format (finalTime))
-
+        print("Appointment has been requested for the following time and date:\n{0}".format (finalDateTime))
+        return finalDateTime
+    
     # allow to send short message to MHWP for reason of appointment
     # email update
 
@@ -269,6 +274,12 @@ class Patient(User):
 
         print(outputString)
 
+    def displayAllAppointments(self):
+        for key in self.patientCalendar.keys():
+            splitTime = key.split(" ")
+            appointmentObject = self.patientCalendar[key]
+            print("Appointment on [{0}] at time [{1}] with practitioner: {2} {3}".format(splitTime[0],splitTime[1],appointmentObject.mhwpInstance.first_name,appointmentObject.mhwpInstance.last_name))
+
     @classmethod
     def searchExercises(cls):
         while True:
@@ -289,21 +300,4 @@ class Patient(User):
                         break
                 else:
                     print("Sorry, we could not find any resources to match your search term. Some suggestions are 'mindfulness' or 'meditation'.")
-
-
-# patient = Patient("hannah","zhao","h@gmail.com",user_type="patient",username="han",password="881",mhwpAsigned="drhannah",
-#                   emergencyEmail="hannahzhao2@han.com",
-#                   colourCode=None)
-
-
-# patient.updateEmergencyContact()
-# patient.searchExercises()
-# patient.moodTracker()
-# patient.journal()
-# patient.bookAppointment()
-
-
-# Each calendar object is: [YYYY-MM-DD HH:MM:SS]
-
-# add mhwp name to each list in notes (so it is [time,commments,mhwp_name])
 
