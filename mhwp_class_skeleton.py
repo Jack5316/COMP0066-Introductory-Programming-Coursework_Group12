@@ -59,6 +59,13 @@ class MHWP(): #input is User
             4: "\033[96m",  # Cyan for good mood
             5: "\033[94m",  # Blue for very good mood
         }
+        mood_emojis = {
+            1: "💔",  # Very bad mood
+            2: "👿",  # Bad mood
+            3: "😐",  # Neutral mood
+            4: "🙂",  # Good mood
+            5: "🥳",  # Very good
+        }
         reset_color = "\033[0m"  # Reset color to default
 
         print("\033[1mPatient Mood Tracker\033[0m")  # Bold header
@@ -74,6 +81,7 @@ class MHWP(): #input is User
             print(
                 f"{mood_color}Email: {email}\n"
                 f"Current Mood: {current_mood}\033[0m\n"  # Reset color after each section
+                f"{mood_emojis.get(current_mood, '')}\n"
             )
             print("-" * 30)
 
