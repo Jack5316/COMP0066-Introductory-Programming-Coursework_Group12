@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from User import User
 from patient import Patient
+from utils import export_appointments_to_ics
 
 class MHWP(User):
     def __init__(self, first_name, last_name, email, username, password):
@@ -264,6 +265,37 @@ class MHWP(User):
                     print("Invalid number. Please select a valid appointment.")
             except ValueError:
                 print("Please enter a valid number.")
+
+    # EXPORT APPOINTMENTS TO CALENDAR
+    def export_appointments_to_ics(self, start_date, end_date):
+        """
+        Export the MHWP's confirmed appointments within the specified date range to an .ics file.
+        """
+        filename_prefix = f"{self.first_name}_{self.last_name}"
+        print(f"Exporting {filename_prefix}'s calendar...")
+        export_appointments_to_ics(self.appointment_calendar, start_date, end_date, filename_prefix, is_mhwp=True)
+
+    def cli_export_appointments(self):
+        """
+        CLI for exporting MHWP's appointments to an ICS file.
+        """
+        print("Exporting MHWP appointments to ICS file.")
+        start_date_str = input("Enter start date (YYYY-MM-DD): ")
+        end_date_str = input("Enter end date (YYYY-MM-DD): ")
+
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+            # Call export function
+            export_appointments_to_ics(self.appointment_calendar, start_date, end_date,
+                                       f"{self.first_name}_{self.last_name}")
+
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+
+
+
 
 
 
