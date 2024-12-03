@@ -1,6 +1,7 @@
 from time import gmtime, strftime
 from user import User
 from datetime import datetime 
+from utils import export_appointments_to_ics
 
 
 class Patient(User):
@@ -300,4 +301,34 @@ class Patient(User):
                         break
                 else:
                     print("Sorry, we could not find any resources to match your search term. Some suggestions are 'mindfulness' or 'meditation'.")
+
+
+    def export_appointments_to_ics(self, start_date, end_date):
+        """
+        Export the patient's confirmed appointments  within the specified date range to an .ics file.
+        """
+        filename_prefix = f"{self.first_name}_{self.last_name}"
+        print(f"Exporting {filename_prefix}'s calendar...")
+        export_appointments_to_ics(self.patientCalendar, start_date, end_date, filename_prefix, is_mhwp=False)
+
+    # EXPORT APPOINTMENTS TO CALENDAR
+    def cli_export_appointments(self):
+        """
+        CLI for exporting Patient's appointments to an ICS file.
+        """
+        print("Exporting Patient's appointments to ICS file.")
+        start_date_str = input("Enter start date (YYYY-MM-DD): ")
+        end_date_str = input("Enter end date (YYYY-MM-DD): ")
+
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+            # Call export function
+            export_appointments_to_ics(self.patientCalendar, start_date, end_date,
+                                       f"{self.first_name}_{self.last_name}", is_mhwp=False)
+
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+
 
