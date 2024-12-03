@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from user import User
 
 class Patient(User):
@@ -14,32 +14,42 @@ class MHWP(User):
         self.appointment_calendar = {}  # Dictionary to store appointments.
         self.working_hours = {"start": "09:00", "end": "17:00"}  # MWWP working hours.
 
-#Aligned display calendar
+#adjusted calender so MHWP only needs to enter dates, not times 
 
-    def display_calendar(self, start_time, end_time):
-        """Display appointments scheduled within a given timeframe."""
+def display_calendar(self, start_date, end_date):
+    """Display appointments scheduled within a given date range."""
 
-        # Validate user input for correct datetime range
-        if start_time >= end_time:
-            print("Error: Start time must be earlier than end time.")
-            return
+    # Convert dates to datetime with range covering the whole days
+    try:
+        start_datetime = datetime.combine(start_date, datetime.min.time())
+        end_datetime = datetime.combine(end_date, datetime.max.time())
+    except Exception as e:
+        print(f"Error in date conversion: {e}")
+        return
 
-        # Filter appointments within the given time frame
-        appointments_in_timeframe = {
-            time: appointment
-            for time, appointment in self.appointment_calendar.items()
-            if start_time <= time <= end_time
-        }
+    # Validate date range
+    if start_datetime >= end_datetime:
+        print("Error: Start date must be earlier than end date.")
+        return
 
-        # Display results
-        if appointments_in_timeframe:
-            print(f"Appointments from {start_time} to {end_time}:")
-            for time, appointment in sorted(appointments_in_timeframe.items()):
-                patient = appointment.patientInstance  # Access the Patient instance
-                status = appointment.status  # Access the appointment status
-                print(f"- {time}: {patient.first_name} {patient.last_name} ({status})")
-        else:
-            print(f"No appointments scheduled between {start_time} and {end_time}.")
+    # Filter appointments within the given date range
+    appointments_in_date_range = {
+        time: appointment
+        for time, appointment in self.appointment_calendar.items()
+        if start_datetime <= time <= end_datetime
+    }
+
+    # Display results
+    if appointments_in_date_range:
+        print(f"Appointments from {start_date} to {end_date}:")
+        for time, appointment in sorted(appointments_in_date_range.items()):
+            patient = appointment.patientInstance  # Access the Patient instance
+            status = appointment.status  # Access the appointment status
+            print(f"- {time}: {patient.first_name} {patient.last_name} ({status})")
+    else:
+        print(f"No appointments scheduled between {start_date} and {end_date}.")
+
+
 
 def cancel_appointment(self, appointment):
         """Cancel an appointment by updating its status."""
