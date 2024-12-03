@@ -78,6 +78,30 @@ def cancel_appointment(self, appointment):
                 self.appointment_calendar[appointment.date_time] = appointment
 
 
+def view_requests(self):
+    """Display enumerated appointments with the 'requested' status."""
+    # Filter appointments with 'requested' status
+    requested_appointments = [
+        (time, appointment)
+        for time, appointment in sorted(self.appointment_calendar.items())
+        if appointment.status == "requested"
+    ]
+
+    # Display results
+    if requested_appointments:
+        print("\033[1mRequested Appointments:\033[0m")  # Bold header
+        for idx, (time, appointment) in enumerate(requested_appointments, start=1):
+            patient = appointment.patientInstance  # Access the Patient instance
+            print(f"{idx}. {time}: {patient.first_name} {patient.last_name} ({appointment.status})")
+
+        return requested_appointments  # Return the list for further interaction
+    else:
+        print("No requested appointments at the moment.")
+        return None
+
+
+
+
 # CLI methods
     def cli_confirm_appointment(self):
         """Handle the CLI for confirming an appointment."""
@@ -129,6 +153,41 @@ def cancel_appointment(self, appointment):
         else:
             print("No appointments available to cancel.")
 
+
+def cli_handle_requested_appointments(self):
+    """Handle the CLI for managing requested appointments."""
+    requested_appointments = self.view_requests()
+
+    if not requested_appointments:
+        return  # Exit if there are no requested appointments
+
+    try:
+        # Get the user's selection
+        choice = int(input("Enter the number of the appointment to manage (or 0 to exit): "))
+        
+        if choice == 0:
+            print("Exiting request management.")
+            return
+        
+        if 1 <= choice <= len(requested_appointments):
+            # Get the selected appointment
+            selected_time, selected_appointment = requested_appointments[choice - 1]
+            
+            # Ask for confirmation or cancellation
+            action = input(f"Do you want to (c)onfirm or (x)ancel the appointment with "
+                           f"{selected_appointment.patientInstance.first_name} "
+                           f"{selected_appointment.patientInstance.last_name} on {selected_time}? ").lower()
+            
+            if action == 'c':
+                self.confirm_appointment(selected_appointment)
+            elif action == 'x':
+                self.cancel_appointment(selected_appointment)
+            else:
+                print("Invalid action. Please choose 'c' to confirm or 'x' to cancel.")
+        else:
+            print("Invalid number. Please select a valid appointment.")
+    except ValueError:
+        print("Please enter a valid number.")
 
     
    
