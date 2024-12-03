@@ -18,7 +18,7 @@ class Appointment:
             self.mhwpInstance.appointment_calendar[self.date_time] = self
         if self.date_time not in self.patientInstance.patientCalendar:
             self.patientInstance.patientCalendar[self.date_time] = self
-        print("Appointment has been confirmed")
+        # print("Appointment has been confirmed")
 
 
     def cancel(self):        
@@ -29,7 +29,7 @@ class Appointment:
             self.patientInstance.patientCalendar.pop(self.date_time)
         if self.date_time in self.mhwpInstance.appointment_calendar:
             self.mhwpInstance.appointment_calendar.pop(self.date_time)
-        print("Appointment has been cancelled")
+        # print("Appointment has been cancelled")
 
 
     def display_appointment(self):
