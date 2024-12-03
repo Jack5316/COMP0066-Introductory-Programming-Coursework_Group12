@@ -41,7 +41,7 @@ class MHWP(User):
         else:
             print(f"No appointments scheduled between {start_time} and {end_time}.")
 
-def cancel_appointment(self, appointment):
+    def cancel_appointment(self, appointment):
         """Cancel an appointment by updating its status."""
         if appointment.status == "cancelled":
             print(
@@ -94,7 +94,7 @@ def cancel_appointment(self, appointment):
         else:
             print("No appointments available to confirm.")
 
- def cli_cancel_appointment(self):
+    def cli_cancel_appointment(self):
         """Handles the CLI for the MHWP to cancel appointments."""
         self.view_calendar()  # Show the current appointments
 
@@ -121,7 +121,6 @@ def cancel_appointment(self, appointment):
 
 
     
-   
     def notify_patient(self, patient, message):
         """
         Notify the patient with a message. Simulate email or SMS notifications.
