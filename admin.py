@@ -29,7 +29,7 @@ from datetime import datetime
         #super().__init__(username, first_name=None, last_name=None, email=None, user_type="MHWP")
         #self.experience = experience
         #self.specialization = specialization
-        #self.patients_list = []  # List of assigned patients
+        #self.all_patients = []  # List of assigned patients
         #self.appointments = []  # List of confirmed bookings}
 
 from user import User
@@ -37,18 +37,17 @@ from patient import Patient
 from mhwp import MHWP
 
 
-
 class Admin(User):
     # Maybe add admin levels? giving different kind of authhority
-    def __init__(self, first_name, last_name, username, email):
+    def __init__(self, first_name, last_name,email, user_type, username, password):
         # Initialise Admin using the base User class
-        super().__init__(first_name, last_name, username, email, user_type="Admin")
-    
+        super().__init__(first_name, last_name, email, user_type, username, password)    
+
     # Method to allocate a patient to an MHWP
     def allocate_patient_to_mhwp(self, patient, mhwp):
         if isinstance(patient, Patient) and isinstance(mhwp, MHWP):
             patient.assigned_mhwp = mhwp.username
-            mhwp.patients_list.append(patient)
+            mhwp.all_patients.append(patient)
             print(f"Patient {patient.username} has been assigned to MHWP {mhwp.username}")
         else:
             print("Invalid user types. Make sure both Patient and MHWP are properly provided.")
@@ -69,7 +68,7 @@ class Admin(User):
     def delete_user(self, user):
         if isinstance(user, User):
             if user.username != self.username:  # Prevent deleting yourself
-                User.users.pop(user.username, None)
+                User.user_dictionary.pop(user.username, None)
                 print(f"User {user.username} has been deleted.")
             else:
                 print("Admin cannot delete themselves.")
@@ -89,7 +88,7 @@ class Admin(User):
         print("\nSummary Report")
         print("--------------")
         print(f"{'Username':<15} {'User Type':<10} {'Assigned MHWP':<15} {'Confirmed Bookings':<10}")
-        for self.username, user in User.users.items():
+        for self.username, user in User.user_dictionary.items():
             if isinstance(user, Patient):
                 print(f"{user.username:<15} {'Patient':<10} {user.assigned_mhwp:<15} {len(user.appointments):<10}")
             elif isinstance(user, MHWP):

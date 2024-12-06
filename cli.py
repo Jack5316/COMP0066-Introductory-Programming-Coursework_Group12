@@ -3,7 +3,7 @@ from user import User
 from admin import Admin
 from patient import Patient
 from mhwp import MHWP
-from appointment import Appointment
+
 
 
 
@@ -24,7 +24,7 @@ def main_menu():
 
 def login():
     username = input("Enter username: ").strip()
-    password = input("Enter password: ").strip()
+    password = input("Enter password: ")
     User.login(username, password)
 
     if User.user_session:
@@ -136,9 +136,11 @@ def mhwp_menu(mhwp):
         print("1. View Calendar")
         print("2. Confirm Appointment")
         print("3. Cancel Appointment")
-        print("4. Add Patient Notes/Conditions")
-        print("5. View Patient Mood Tracker Summary")
-        print("6. Logout")
+        print("4. Handle Requests")
+        print("5. Add Patient Notes/Conditions")
+        print("6. View Patient Mood Tracker Summary")
+        print("7. Export Appointments")
+        print("8. Logout")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -146,19 +148,21 @@ def mhwp_menu(mhwp):
             end_time = input("Enter end time (YYYY-MM-DD HH:MM): ").strip()
             mhwp.display_calendar(start_time, end_time)
         elif choice == "2":
-            appointment_time = input("Enter the appointment time to confirm (YYYY-MM-DD HH:MM): ").strip()
-            mhwp.confirm_appointment(appointment_time)
+            mhwp.cli_confirm_appointment()
         elif choice == "3":
-            appointment_time = input("Enter the appointment time to cancel (YYYY-MM-DD HH:MM): ").strip()
-            mhwp.cancel_appointment(appointment_time)
+            mhwp.cli_cancel_appointment()
         elif choice == "4":
+            mhwp.cli_handle_requested_appointments()
+        elif choice == "5":
             patient_email = input("Enter patient's email: ").strip()
             notes = input("Enter notes: ").strip()
             mood = input("Enter mood: ").strip()
             mhwp.add_patient_info(patient_email, notes, mood)
-        elif choice == "5":
-            mhwp.display_patients_with_moods()
         elif choice == "6":
+            mhwp.display_patients_with_moods()
+        elif choice == "7":
+            mhwp.cli_export_appointments()
+        elif choice == "8":
             User.logout()
             break
         else:
@@ -168,7 +172,7 @@ def get_user_instance(username):
     """
     Fetch the user instance by username. Assume users are stored in a dictionary.
     """
-    for user in [patient, practioner]:  # Replace with your actual user storage mechanism
+    for user in [admin, patient, practioner]:  # Replace with your actual user storage mechanism
         if user.username == username:
             return user
     return None
@@ -183,6 +187,9 @@ def get_user_instance(username):
 practioner = MHWP("John", "Smith", "him@gmail.com", user_type="mhwp", username="bland", password="881")
 patient = Patient("Patient", "Zeri", "diseased@gmail.com", user_type="patient", username="diseas", password="881",
                   mhwpAsigned=practioner, emergencyEmail="disease@outlook.com", colourCode=None)
+admin = Admin("Alex", "Chris", "alex@gmail.com",user_type= "admin", username="alex", password="881")
+
 
 if __name__ == "__main__":
     main_menu()
+
