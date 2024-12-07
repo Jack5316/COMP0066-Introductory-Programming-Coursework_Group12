@@ -489,42 +489,5 @@ class Patient(User):
 
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
-                  
 
-def cli_book_appointment(patient):
-        # CLI to handle different types of appointment booking: regular, soonest, or emergency.
 
-            print("\n--- Appointment Booking ---")
-            print("1. Book a Regular Appointment")
-            print("2. Book the Soonest Available Appointment")
-            print("3. Book an Emergency Appointment")
-            print("4. Return to Main Menu")
-            
-            while True:
-                try:
-                    choice = int(input("Enter your choice (1-4): "))
-                    if choice == 1:
-                        print("\n--- Booking a Regular Appointment ---")
-                        appointment_time = patient.bookAppointment()
-                        if appointment_time:
-                            print(f"Appointment successfully requested for {appointment_time}.")
-                        break
-                    elif choice == 2:
-                        print("\n--- Booking the Soonest Available Appointment ---")
-                        appointment_time = patient.bookSoonestAppointment()
-                        if appointment_time:
-                            print(f"Successfully booked the soonest appointment for {appointment_time}.")
-                        break
-                    elif choice == 3:
-                        print("\n--- Booking an Emergency Appointment ---")
-                        appointment_time = patient.emergencyAppointment()
-                        if appointment_time:
-                            print(f"Successfully booked an emergency appointment for {appointment_time}.")
-                        break
-                    elif choice == 4:
-                        print("Returning to Patient Menu...")
-                        break
-                    else:
-                        print("Invalid choice. Please select a number between 1 and 4.")
-                except ValueError:
-                    print("Invalid input. Please enter a valid number.")
