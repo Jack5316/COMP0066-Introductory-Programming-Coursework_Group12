@@ -6,7 +6,6 @@ from mhwp import MHWP
 
 
 
-
 def main_menu():
     while True:
         print("\n--- Breeze Mental Health Management System ---")
@@ -112,7 +111,9 @@ def patient_menu(patient):
         elif choice == "4":
             Patient.searchExercises()
         elif choice == "5":
-            cli_book_appointment(patient)
+            appointment_time = patient.bookAppointment()
+            if appointment_time:
+                print(f"Appointment requested for {appointment_time}.")
         elif choice == "6":
             patient.displayAllAppointments()
         elif choice == "7":
@@ -182,8 +183,8 @@ def get_user_instance(username):
 # patient2 = Patient("Jane", "Doe", "janedoe@example.com", "patient", "patient2", "", mhwp1, "emergency@example.com", [])
 
 
-practioner = MHWP("John", "Smith", "him@gmail.com", user_type="mhwp", username="bland", password="881")
-patient = Patient("Patient", "Zeri", "diseased@gmail.com", user_type="patient", username="diseas", password="881",
+practioner = MHWP("John", "Smith", "him@gmail.com", username="mhwp1", password="")
+patient = Patient("Patient", "Zeri", "diseased@gmail.com", user_type="patient", username="patient1", password="",
                   mhwpAsigned=practioner, emergencyEmail="disease@outlook.com", colourCode=None)
 admin = Admin("Alex", "Chris", "alex@gmail.com",user_type= "admin", username="alex", password="881")
 
