@@ -17,6 +17,7 @@ class Appointment:
 
         patient.patientCalendar[date_time] = self
         Appointment.all_appointment_objects.append(self)
+        Appointment.save_all_appointments()
 
     def confirm(self):
         # notification sent to both patient and practitioner  
