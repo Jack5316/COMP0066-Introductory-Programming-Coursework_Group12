@@ -6,18 +6,19 @@ class User:
     user_session = None
 
     def __init__(self, first_name, last_name, email, user_type, username, password):
+        username_clean = str(username).strip().lower()
         self.type_validate(user_type)
         self.email_validate(email)
-        self.username_validate(username)
+        self.username_validate(username_clean)
 
-        User.user_dictionary[str(username)] = str(password)
+        User.user_dictionary[username_clean] = str(password)
 
         self.first_name = str(first_name)
         self.last_name = str(last_name)
         self.email = str(email)
         self.blocked = False
         self.user_type = str(user_type)
-        self.username = str(username)
+        self.username = username_clean
         self.password = str(password)
 
     @classmethod
@@ -43,9 +44,10 @@ class User:
 
     @classmethod
     def login(cls, username, password):
-        if username in cls.user_dictionary and cls.user_dictionary[username] == password:
-            cls.user_session = username
-            print(f"Login successful: welcome {username}.")
+        login_clean = str(username).strip().lower()
+        if login_clean in cls.user_dictionary and cls.user_dictionary[login_clean] == password:
+            cls.user_session = login_clean
+            print(f"Login successful: welcome {login_clean}.")
         else:
             print("Invalid login details!")
 
@@ -65,6 +67,14 @@ class User:
     def update_password(self, new_password):
         self.password = new_password
         User.user_dictionary[self.username] = str(new_password)
+
+# practitioner = User("John", "Smith", "him@gmail.com", user_type="mhwp", username=" Bland ", password="881")
+
+# print(practitioner.username)
+
+# User.login("  bLand", "881")
+
+
 
 
 

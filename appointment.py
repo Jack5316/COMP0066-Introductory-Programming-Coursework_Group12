@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from patient import Patient
 from mhwp import MHWP 
