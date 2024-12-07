@@ -14,6 +14,8 @@ class Appointment:
         self.mhwpInstance = mhwp
         self.date_time = date_time
         self.status = status
+
+        patient.patientCalendar[date_time] = self
         Appointment.all_appointment_objects.append(self)
 
     def confirm(self):
