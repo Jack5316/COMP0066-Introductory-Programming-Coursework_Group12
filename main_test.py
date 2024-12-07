@@ -14,10 +14,13 @@ patient_example = Patient("Patient", "Zeri", "auctionsite097@gmail.com", user_ty
 
 # ONLY run load_appointments after setting up basic users 
 Appointment.load_appointments()
-print(Appointment.all_appointment_objects)
 
-print(patient_example.patientCalendar)
-patient_example.bookAppointment()
+
+# print(Appointment.all_appointment_objects)
+# print(patient_example.patientCalendar)
+
+
+# patient_example.bookAppointment()
 # practioner.cli_confirm_appointment()
 
 
