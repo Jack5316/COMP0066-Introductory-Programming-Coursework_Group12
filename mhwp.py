@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from user import User
+from time import gmtime, strftime
 from patient import Patient
 from utils import export_appointments_to_ics
 
@@ -93,7 +94,7 @@ class MHWP(User):
                 status = appointment.status  # Access the appointment status
                 print(f"- {time}: {patient.first_name} {patient.last_name} ({status})")
         else:
-            print("No appointments scheduled between the selected dates.")
+            print(f"No appointments scheduled between in given time range.")
 
     # CONFIRM APPOINTMENT
 
@@ -296,32 +297,73 @@ class MHWP(User):
 
 
 
-
-
-
-
-
-   
-
-
-
-
-            
-            
-
-    
-   
-    
     def display_conditions(self, predefined_conditions):
         print("Please select a condition from the following list:")
         for i, condition in enumerate(predefined_conditions, start=1):
-            print(f"{i}. {condition}")
+            print(f"{i} - {condition}")
 
-    def add_patient_info(self, patient_email, notes, mood):
+
+    def select_patient(self):
+        """Function allows the MHWP to select a patient from all their patients  
+
+        Returns:
+            Patient: The selected object for the selected patient.
+            bool: Returns False if the user decides to not select a patient.
+        """
+        patients_enum = enumerate(self.all_patients,start=1)
+        patient_display_string = ""
+
+        for index,patient in patients_enum:
+                patient_display_string = patient_display_string + f"{index} - {patient.first_name} {patient.last_name}\n"
+        
+        while True:
+            print("Select a patient from the following list by typing the respective number (OR type 0 to cancel)")
+            print(patient_display_string)
+            try:
+                selection = int(input("Select one of the above: "))
+                if selection == 0:
+                    print("No patient has been chosen")
+                    return False
+                
+                elif (0 < selection <= len(self.all_patients)):
+                    selected_patient_object = self.all_patients[selection - 1]
+                    print("You have selected patient: {0} {1}".format(selected_patient_object.first_name,selected_patient_object.last_name))
+                    return selected_patient_object
+
+                else:
+                    print("Select a valid patient from the list. ")
+                    continue
+
+            except ValueError:
+                print("Please enter a valid number: ")
+
+        
+    def add_patient_note(self):
+        current_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+
+        patient_object = self.select_patient()
+        if patient_object == False:
+            print("Add patient note cancelled as no patient given")
+            return False
+
+        comments = input("Enter your desired comments: ")
+        new_note = [current_time,comments,self.first_name + " " + self.last_name]
+
+        patient_object.notes.append(new_note)
+
+
+    def add_patient_condition(self):
+        patient_object = self.select_patient()
+        if patient_object == False:
+            print("Add patient condition cancelled as no patient given")
+            return False
+        
         predefined_conditions = ['anxiety', 'autism', 'depression', 'bipolar disorder', 'OCD', 'PTSD']
+        for condition in predefined_conditions:
+            if condition in patient_object.conditions:
+                predefined_conditions.remove(condition)
         self.display_conditions(predefined_conditions)
 
-        # User selects a condition
         try:
             choice = int(input("Enter the number of the condition: "))
             if 1 <= choice <= len(predefined_conditions):
@@ -333,14 +375,10 @@ class MHWP(User):
             print("Invalid input. Please enter a number.")
             return
 
-        # Initialize patient data if not already present
-        if patient_email not in self.patients:
-            self.patients[patient_email] = {'conditions': [], 'notes': [], 'mood': []}
+        patient_object.conditions.append(condition)
+        print(f"Patient named {patient_object.first_name} {patient_object.last_name} has had the following condition added: {condition}")
+        return 
 
-        # Add valid condition, notes, and mood
-        self.patients[patient_email]['conditions'].append(condition)
-        self.patients[patient_email]['notes'].append(notes)
-        self.patients[patient_email]['mood'].append(mood)
 
     def display_patients_with_moods(self):
         mood_colors = {

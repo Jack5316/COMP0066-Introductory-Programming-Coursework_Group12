@@ -15,6 +15,7 @@ class Patient(User):
         self.notes = []     # each notes entry is in form [time,commments,mhwp_name]
         self.emergencyEmail = emergencyEmail
         self.colourCode = colourCode
+        mhwpAsigned.all_patients.append(self)
 
     def moodTracker(self):
         moods = {"Dark Green": "Very Happy", "Light Green": "Happy", "Yellow":"Positive Neutral", "Orange":"Negative Neutral", "Light Red":"Sad", "Dark Red":"Very Sad"}
@@ -255,6 +256,10 @@ class Patient(User):
 
         appointmentDate = datetime.strftime(appointmentDate,"%Y-%m-%d")
         finalDateTime = "{0} {1}:00".format(appointmentDate,selectedTime)
+
+        # import the appointment class here otherwise issue due to circular imports
+        from appointment import Appointment
+        Appointment(self,self.mhwpAsigned,finalDateTime)
 
         print("Appointment has been requested for the following time and date:\n{0}".format (finalDateTime))
         return finalDateTime
