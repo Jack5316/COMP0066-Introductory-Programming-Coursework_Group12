@@ -1,6 +1,6 @@
 from time import gmtime, strftime
 from user import User
-from datetime import datetime 
+from datetime import datetime, timedelta
 from utils import export_appointments_to_ics
 
 
@@ -160,9 +160,13 @@ class Patient(User):
         str: The finalized appointment datetime in the format 
             "YYYY-MM-DD HH:00", OR False if no appointment is booked.
         """
-        
         appointmentDate = Patient.getUserAppointmentDate()
 
+        for start, end in self.mhwpAsigned.unavailable_periods:
+            if start.date() <= appointmentDate.date() <= end.date():
+                print(f"Sorry, your MHWP is unavailable on {appointmentDate.date()} due to a scheduled holiday.")
+                return False
+            
         # pull out working hours of mhwp
         mhwpStart = self.mhwpAsigned.working_hours["start"].split(":")[0]
         mhwpStart = int(mhwpStart)
@@ -216,12 +220,16 @@ class Patient(User):
             if currentAppointmentOccurence[0] == datetime.strftime(appointmentDate,"%Y-%m-%d"):
                 # append the taken time to list IF the date is the same
                 currentMHWPAppointments.append(int(currentAppointmentOccurence[1].split(":")[0]))
-
+      
         # find potential times based on MHWP calendar
         potentialTimes = []
         while mhwpStart < mhwpFinish:
-            if mhwpStart not in currentMHWPAppointments:
-                    potentialTimes.append(mhwpStart)
+            appointmentTime = datetime.combine(appointmentDate, datetime.min.time()) + timedelta(hours=mhwpStart)
+            if (
+                mhwpStart not in currentMHWPAppointments and
+                all(not (start <= appointmentTime <= end) for start, end in self.mhwpAsigned.unavailable_periods)
+            ):
+                potentialTimes.append(mhwpStart)
             mhwpStart += 1
         
         # show user potential times and get input 
@@ -254,6 +262,157 @@ class Patient(User):
     # allow to send short message to MHWP for reason of appointment
     # email update
 
+    def bookSoonestAppointment(self):
+        # automatically books the soonest available appointment starting from the next day.
+        currentDate = datetime.now().date()
+        nextDay = currentDate + timedelta(days=1)
+        mhwpStart = int(self.mhwpAsigned.working_hours["start"].split(":")[0])
+        mhwpFinish = int(self.mhwpAsigned.working_hours["end"].split(":")[0])
+
+        while True:
+            # check if the nextDay is within an unavailable period
+            for start, end in self.mhwpAsigned.unavailable_periods:
+                if start.date() <= nextDay <= end.date():
+                    nextDay += timedelta(days=1)
+                    break
+            else:
+                # check for available slots on this day
+                currentMHWPAppointments = []
+                for mhwpDatetime in self.mhwpAsigned.appointment_calendar.keys():
+                    currentAppointmentOccurrence = mhwpDatetime.split(" ")[0]
+                    if currentAppointmentOccurrence == nextDay.strftime("%Y-%m-%d"):
+                        currentMHWPAppointments.append(int(mhwpDatetime.split(" ")[1].split(":")[0]))
+                patientConflictingAppointments = []
+                for appointmentDatetime in self.patientCalendar.keys():
+                    currentAppointmentOccurrence = appointmentDatetime.split(" ")[0]
+                    if currentAppointmentOccurrence == nextDay.strftime("%Y-%m-%d"):
+                        patientConflictingAppointments.append(appointmentDatetime)
+
+                if patientConflictingAppointments:
+                    print("You already have the following appointments on the date {0}:".format(nextDay.strftime("%Y-%m-%d")))
+                    for appointment in patientConflictingAppointments:
+                        print(appointment)
+
+                potentialTimes = []
+                for hour in range(mhwpStart, mhwpFinish):
+                    appointmentTime = datetime.combine(nextDay, datetime.min.time()) + timedelta(hours=hour)
+                    if (
+                        hour not in currentMHWPAppointments and
+                        all(not (start <= appointmentTime <= end) for start, end in self.mhwpAsigned.unavailable_periods)
+                    ):
+                        potentialTimes.append(hour)
+
+                if potentialTimes:
+                    selectedTime = potentialTimes[0]
+                    appointmentDateTime = datetime.combine(nextDay, datetime.min.time()) + timedelta(hours=selectedTime)
+                    print(f"Suggested soonest appointment: {appointmentDateTime.strftime('%Y-%m-%d %H:%M')}")
+
+                    flag = True
+                    confirmation = False
+                    yes_no = {1: "Yes", 2: "No"}
+
+                    while flag:
+                        print("Would you like to confirm this appointment?")
+                        try:
+                            for key, value in yes_no.items():
+                                print(f"{key} - {value}")
+                            confirmation = int(input("Enter your choice: "))
+                            if confirmation not in yes_no:
+                                print("Please only enter 1 or 2.")
+                                continue
+                            break
+                        except ValueError:
+                            print("Please enter a valid number.")
+
+                    if confirmation == 2:
+                        print("No appointment has been made.")
+                        return False
+
+                    appointmentDate = nextDay.strftime("%Y-%m-%d")
+                    finalDateTime = f"{appointmentDate} {selectedTime:02d}:00"
+                    print(f"Appointment successfully booked for {finalDateTime}.")
+                    return finalDateTime
+                else:
+                    nextDay += timedelta(days=1)
+                   
+    def emergencyAppointment(self):
+        """
+        Allows the patient to book an emergency appointment on the same day.
+        The user is prompted to select a time and confirm the appointment.
+        """
+        currentDate = datetime.now().date()
+        currentTime = datetime.now().time()
+        mhwpStart = int(self.mhwpAsigned.working_hours["start"].split(":")[0])
+        mhwpFinish = int(self.mhwpAsigned.working_hours["end"].split(":")[0])
+
+        print("This is an emergency booking. If it is a medical emergency, please call 999.")
+
+        # check available slots for the remainder of the day
+        potentialTimes = []
+        for hour in range(mhwpStart, mhwpFinish):
+            appointmentTime = datetime.combine(currentDate, datetime.min.time()) + timedelta(hours=hour)
+            if (
+                appointmentTime.time() > currentTime and
+                all(not (start <= appointmentTime <= end) for start, end in self.mhwpAsigned.unavailable_periods)
+            ):
+                potentialTimes.append(hour)
+
+        if not potentialTimes:
+            print("No emergency slots are available today.")
+            return False
+        
+        mhwpAppointments = self.mhwpAsigned.appointment_calendar.keys()
+        availableTimes = []
+        for time in potentialTimes:
+            appointmentTime = datetime.combine(currentDate, datetime.min.time()) + timedelta(hours=time)
+            formattedTime = appointmentTime.strftime("%Y-%m-%d %H:%M")
+    
+            if formattedTime not in mhwpAppointments:
+                availableTimes.append(time)
+
+        
+        print("Available emergency appointment times today:")
+        for index, hour in enumerate(potentialTimes, start=1):
+            print(f"{index}. {hour:02d}:00")
+
+        while True:
+            try:
+                choice = int(input("Select a time by entering the corresponding number: "))
+                if 1 <= choice <= len(potentialTimes):
+                    selectedTime = potentialTimes[choice - 1]
+                    appointmentDateTime = datetime.combine(currentDate, datetime.min.time()) + timedelta(hours=selectedTime)
+                    print(f"Selected emergency appointment: {appointmentDateTime.strftime('%Y-%m-%d %H:%M')}")
+
+                    flag = True
+                    confirmation = False
+                    yes_no = {1: "Yes", 2: "No"}
+
+                    while flag:
+                        print("Would you like to confirm this appointment?")
+                        try:
+                            for key, value in yes_no.items():
+                                print(f"{key} - {value}")
+                            confirmation = int(input("Enter your choice: "))
+                            if confirmation not in yes_no:
+                                print("Please only enter 1 or 2.")
+                                continue
+                            break
+                        except ValueError:
+                            print("Please enter a valid number.")
+
+                    if confirmation == 2:
+                        print("No appointment has been made.")
+                        return False
+
+                    appointmentDate = currentDate.strftime("%Y-%m-%d")
+                    finalDateTime = f"{appointmentDate} {selectedTime:02d}:00"
+                    print(f"Emergency appointment successfully booked for {finalDateTime}.")
+                    return finalDateTime
+                else:
+                    print(f"Invalid choice. Please select a number between 1 and {len(potentialTimes)}.")
+            except ValueError:
+                print("Please enter a valid number.")
+    
     def cancelAppointment(self,appointmentInstance):
         appointmentInstance.cancel()
         # send email update 
