@@ -14,6 +14,7 @@ class Patient(User):
         self.notes = []     # each notes entry is in form [time,commments,mhwp_name]
         self.emergencyEmail = emergencyEmail
         self.colourCode = colourCode
+        mhwpAsigned.all_patients.append(self)
 
     def moodTracker(self):
         moods = {"Dark Green": "Very Happy", "Light Green": "Happy", "Yellow":"Positive Neutral", "Orange":"Negative Neutral", "Light Red":"Sad", "Dark Red":"Very Sad"}
