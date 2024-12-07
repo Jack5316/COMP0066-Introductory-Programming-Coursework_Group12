@@ -1,90 +1,317 @@
-from datetime import datetime
-from user import User
-
-class Patient(User):
-    def __init__(self, first_name, last_name, email, username, password):
-        super().__init__(first_name, last_name, email, "patient", username, password)
-
+from datetime import datetime, timedelta
+from User import User
+from patient import Patient
+from utils import export_appointments_to_ics
 
 class MHWP(User):
-    def __init__(self, first_name, last_name, email, user_type, username, password):
-
+    def __init__(self, first_name, last_name, email, username, password):
+        # Call the parent class constructor to initialize user-related attributes
         super().__init__(first_name, last_name, email, "mhwp", username, password)
-        self.all_patients = []  # List to store all Patient objects.
-        self.appointment_calendar = {}  # Dictionary to store appointments.
-        self.working_hours = {"start": "09:00", "end": "17:00"}  # MWWP working hours.
 
-    def display_calendar(self, start_time, end_time):
-    # Display appointments scheduled within a given timeframe.
-    # Validate user input
-        if start_time >= end_time:
-            print("Error: Start time must be earlier than end time.")
+        # Initialize attributes specific to MHWP
+        self.all_patients = []  # List to store all Patient objects
+        self.appointment_calendar = {}  # Dictionary to store appointments by date/time
+        self.unavailable_periods = []  # List to store unavailable periods
+        self.working_hours = {"start": "09:00", "end": "17:00"}  # MHWP working hours
+
+    # SET UNAVAILABLE TIME PERIOD E.G. HOLIDAYS
+
+    def set_unavailable_period(self, start_date, end_date):
+        """Set a period during which the MHWP is unavailable."""
+        # Validate the date range
+        try:
+            start_datetime = datetime.combine(start_date, datetime.min.time())
+            end_datetime = datetime.combine(end_date, datetime.max.time())
+        except Exception as e:
+            print(f"Error in date conversion: {e}")
             return
 
-        # Filter appointments within given time frame
-        appointments_in_timeframe = {
-            time: appointment_info
-            for time, appointment_info in self.appointment_calendar.items()
-            if start_time <= time <= end_time
+        if start_datetime >= end_datetime:
+            print("Error: Start date must be earlier than end date.")
+            return
+
+        # Add the additional check here to ensure the end date is after the start date
+        if end_datetime <= start_datetime:
+            print("Error: End date must be after start date.")
+            return
+
+        # Mark the unavailable period
+        if not hasattr(self, 'unavailable_periods'):
+            self.unavailable_periods = []  # Initialize if not already present
+
+        self.unavailable_periods.append((start_datetime, end_datetime))
+        print(f"Unavailable period set from {start_date} to {end_date}.")
+
+
+    def cli_set_unavailable_period(self):
+        """Handle the CLI for setting unavailable periods."""
+        try:
+            start_date = input("Enter the start date for the unavailable period (YYYY-MM-DD): ")
+            end_date = input("Enter the end date for the unavailable period (YYYY-MM-DD): ")
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+            self.set_unavailable_period(start_date, end_date)
+        except ValueError:
+            print("Invalid date format. Please enter the dates in YYYY-MM-DD format.")
+
+
+    # DISPLAY CALENDAR
+
+    def display_calendar(self, start_date, end_date):
+        """Display appointments scheduled within a given date range, including unavailable periods."""
+
+        # Convert dates to datetime with range covering the whole days
+        start_datetime = datetime.combine(start_date, datetime.min.time())
+        end_datetime = datetime.combine(end_date, datetime.max.time())
+
+        # Validate date range
+        if start_datetime >= end_datetime:
+            print("Error: Start date must be earlier than end date.")
+            return
+
+        # Display unavailable periods
+        print("\033[1mUnavailable Periods:\033[0m")
+        if hasattr(self, 'unavailable_periods'):
+            for start, end in self.unavailable_periods:
+                if start <= end_datetime and end >= start_datetime:  # Overlaps with the requested range
+                    print(f"- {start} to {end}")
+        else:
+            print("No unavailable periods set.")
+
+        # Display appointments
+        appointments_in_date_range = {
+            time: appointment
+            for time, appointment in self.appointment_calendar.items()
+            if start_datetime <= time <= end_datetime
         }
 
-        # Display results
-        if appointments_in_timeframe:
-            print(f"Appointments from {start_time} to {end_time}:")
-
-            for time, appointment_info in sorted(appointments_in_timeframe.items()):
-                patient = appointment_info["patient"]
-                status = appointment_info["status"]
+        print("\033[1mScheduled Appointments:\033[0m")
+        if appointments_in_date_range:
+            for time, appointment in sorted(appointments_in_date_range.items()):
+                patient = appointment.patientInstance  # Access the Patient instance
+                status = appointment.status  # Access the appointment status
                 print(f"- {time}: {patient.first_name} {patient.last_name} ({status})")
         else:
-            print(f"No appointments scheduled between {start_time} and {end_time}.")
+            print("No appointments scheduled between the selected dates.")
 
-    def confirm_appointment(self, appointment_time):
-        """
-        Confirm an appointment by updating its status in the calendar.
-        """
-        if appointment_time in self.appointment_calendar:
-            appointment = self.appointment_calendar[appointment_time]
-            if appointment["status"] == "requested":
-                appointment["status"] = "confirmed"
-                patient = appointment["patient"]
-                print(f"Appointment with {patient.first_name} {patient.last_name} on {appointment_time} confirmed.")
-                # Notify patient
-                self.notify_patient(
-                    patient,
-                    f"Your appointment on {appointment_time} has been confirmed."
-                )
+    # CONFIRM APPOINTMENT
+
+    def confirm_appointment(self, appointment):
+        """Confirm an appointment by updating its status."""
+        if appointment.status == "confirmed":
+            print(
+                f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} is already confirmed.")
+        else:
+            appointment.confirm()  # Use the confirm method from the Appointment class
+            print(
+                f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} has been confirmed.")
+
+
+    def cli_confirm_appointment(self):
+        """Handle the CLI for confirming an appointment."""
+        # Get the timeframe to display relevant appointments
+        start_date_str = input("Enter the start date for viewing appointments (YYYY-MM-DD): ")
+        end_date_str = input("Enter the end date for viewing appointments (YYYY-MM-DD): ")
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+            return
+
+        # Check if there are any appointments to confirm
+        appointments_to_confirm = [
+            appt for appt in self.appointment_calendar.values()
+            if appt.status == "requested" and start_date <= appt.date_time.date() <= end_date
+        ]
+
+        if appointments_to_confirm:
+            for idx, appt in enumerate(appointments_to_confirm, start=1):
+                print(f"{idx}. {appt.date_time} - {appt.patientInstance.first_name} {appt.patientInstance.last_name}")
+
+            try:
+                confirm_choice = int(input("Enter the number of the appointment to confirm: "))
+                if 1 <= confirm_choice <= len(appointments_to_confirm):
+                    appointment_to_confirm = appointments_to_confirm[confirm_choice - 1]
+
+                    # Confirm the action
+                    confirm = input(
+                        f"Are you sure you want to confirm the appointment with "
+                        f"{appointment_to_confirm.patientInstance.first_name} "
+                        f"{appointment_to_confirm.patientInstance.last_name} "
+                        f"on {appointment_to_confirm.date_time}? (y/n): "
+                    ).lower()
+
+                    if confirm == 'y':
+                        self.confirm_appointment(appointment_to_confirm)  # Call the confirm method from MHWP
+                    else:
+                        print("Confirmation aborted.")
+                else:
+                    print("Invalid appointment number.")
+            except ValueError:
+                print("Please enter a valid number.")
+        else:
+            print("No appointments available to confirm.")
+
+    # CANCEL APPOINTMENT
+    def cancel_appointment(self, appointment):
+        """Cancel an appointment by updating its status."""
+        if appointment.status == "cancelled":
+            print(
+                f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} is already cancelled.")
+        else:
+            appointment.cancel()  # Use the cancel method from the Appointment class
+            print(
+                f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} has been cancelled.")
+
+
+    def cli_cancel_appointment(self):
+        """Handles the CLI for the MHWP to cancel appointments."""
+
+        # Get the timeframe to display relevant appointments
+        start_date_str = input("Enter the start date for viewing appointments (YYYY-MM-DD): ")
+        end_date_str = input("Enter the end date for viewing appointments (YYYY-MM-DD): ")
+
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+            return
+
+        # Check if there are any appointments to cancel (allow for both 'requested' and 'confirmed' statuses)
+        appointments_to_cancel = [
+            appt for appt in self.appointment_calendar.values()
+            if start_date <= appt.date_time.date() <= end_date and appt.status != "cancelled"
+        ]
+
+        if appointments_to_cancel:
+            for idx, appt in enumerate(appointments_to_cancel, start=1):
+                print(
+                    f"{idx}. {appt.date_time} - {appt.patientInstance.first_name} {appt.patientInstance.last_name} ({appt.status})")
+
+            try:
+                cancel_choice = int(input("Enter the number of the appointment to cancel: "))
+                if 1 <= cancel_choice <= len(appointments_to_cancel):
+                    appointment_to_cancel = appointments_to_cancel[cancel_choice - 1]
+
+                    # Confirm cancellation
+                    confirm = input(
+                        f"Are you sure you want to cancel the appointment with {appointment_to_cancel.patientInstance.first_name} {appointment_to_cancel.patientInstance.last_name} on {appointment_to_cancel.date_time}? (y/n): ").lower()
+
+                    if confirm == 'y':
+                        self.cancel_appointment(appointment_to_cancel)  # Call the cancel method from MHWP
+                    else:
+                        print("Cancellation aborted.")
+                else:
+                    print("Invalid appointment number.")
+            except ValueError:
+                print("Please enter a valid number.")
+        else:
+            print("No appointments available to cancel.")
+
+    # VIEW REQUESTS
+    def view_requests(self):
+        """Display enumerated appointments with the 'requested' status."""
+        # Filter appointments with 'requested' status
+        requested_appointments = [
+            (time, appointment)
+            for time, appointment in sorted(self.appointment_calendar.items())
+            if appointment.status == "requested"
+        ]
+        return requested_appointments
+
+
+    def cli_handle_requested_appointments(self):
+        """Handle the CLI for managing requested appointments."""
+        while True:
+            requested_appointments = self.view_requests()
+
+            # Only print if there are appointments
+            if requested_appointments:
+                print("\033[1mRequested Appointments:\033[0m")  # Bold header
+                for idx, (time, appointment) in enumerate(requested_appointments, start=1):
+                    patient = appointment.patientInstance  # Access the Patient instance
+                    print(f"{idx}. {time}: {patient.first_name} {patient.last_name} ({appointment.status})")
             else:
-                print("Error: Appointment is already confirmed or canceled.")
-        else:
-            print("Error: No appointment found at the specified time.")
+                print("No requested appointments at the moment.")
+                return  # Exit if there are no requested appointments
 
-    def cancel_appointment(self, appointment_time):
+            try:
+                # Get the user's selection
+                choice = int(input("Enter the number of the appointment to manage (or 0 to exit): "))
+
+                if choice == 0:
+                    print("Exiting request management.")
+                    return
+
+                if 1 <= choice <= len(requested_appointments):
+                    # Get the selected appointment
+                    selected_time, selected_appointment = requested_appointments[choice - 1]
+
+                    # Ask for confirmation or cancellation
+                    action = input(f"Do you want to (c)onfirm or (x)ancel the appointment with "
+                                f"{selected_appointment.patientInstance.first_name} "
+                                f"{selected_appointment.patientInstance.last_name} on {selected_time}? ").lower()
+
+                    if action == 'c':
+                        self.confirm_appointment(selected_appointment)
+                    elif action == 'x':
+                        self.cancel_appointment(selected_appointment)
+                    else:
+                        print("Invalid action. Please choose 'c' to confirm or 'x' to cancel.")
+                else:
+                    print("Invalid number. Please select a valid appointment.")
+            except ValueError:
+                print("Please enter a valid number.")
+
+    # EXPORT APPOINTMENTS TO CALENDAR
+    def export_appointments_to_ics(self, start_date, end_date):
         """
-        Cancel an appointment and notify the patient.
+        Export the MHWP's confirmed appointments within the specified date range to an .ics file.
         """
-        if appointment_time in self.appointment_calendar:
-            appointment = self.appointment_calendar[appointment_time]
-            patient = appointment["patient"]
+        filename_prefix = f"{self.first_name}_{self.last_name}"
+        print(f"Exporting {filename_prefix}'s calendar...")
+        export_appointments_to_ics(self.appointment_calendar, start_date, end_date, filename_prefix, is_mhwp=True)
 
-            # Remove the appointment from the calendar
-            del self.appointment_calendar[appointment_time]
-            print(f"Appointment with {patient.first_name} {patient.last_name} on {appointment_time} canceled.")
-
-            # Notify the patient
-            self.notify_patient(
-                patient,
-                f"Your appointment on {appointment_time} has been canceled."
-            )
-        else:
-            print("Error: No appointment found at the specified time.")
-
-    def notify_patient(self, patient, message):
+    def cli_export_appointments(self):
         """
-        Notify the patient with a message. Simulate email or SMS notifications.
+        CLI for exporting MHWP's appointments to an ICS file.
         """
-        print(f"Notification sent to {patient.email}: {message}")
+        print("Exporting MHWP appointments to ICS file.")
+        start_date_str = input("Enter start date (YYYY-MM-DD): ")
+        end_date_str = input("Enter end date (YYYY-MM-DD): ")
 
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+            # Call export function
+            export_appointments_to_ics(self.appointment_calendar, start_date, end_date,
+                                       f"{self.first_name}_{self.last_name}")
+
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+
+
+
+
+
+
+
+
+   
+
+
+
+
+            
+            
+
+    
+   
+    
     def display_conditions(self, predefined_conditions):
         print("Please select a condition from the following list:")
         for i, condition in enumerate(predefined_conditions, start=1):

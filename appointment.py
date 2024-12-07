@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from patient import Patient
 from mhwp import MHWP 
@@ -50,14 +49,3 @@ class Appointment:
         mhwp_name = self.mhwpInstance.first_name + " " + self.mhwpInstance.last_name
         return (f"Appointment(Patient ={ patient_name}, MHWP = {mhwp_name}, "
                 f"DateTime = {self.date_time}, Status = {self.status})")
-    
-
-
-# create a patient and practioner 
-
-# test if confirm appointment works 
-# make an appointment with patient  
-# print out patient calendar to make sure it works
-# run confirm / run cancel 
-
-# check both patient and practioner calendar to make sure appropriate change has taken place
