@@ -15,6 +15,9 @@ class Appointment:
         self.date_time = date_time
         self.status = status
 
+        self.patient_username = patient.username
+        self.mhwp_username = mhwp.username
+
         patient.patientCalendar[date_time] = self
         Appointment.all_appointment_objects.append(self)
         Appointment.save_all_appointments()
@@ -69,7 +72,7 @@ class Appointment:
     def save_all_appointments(file_name="appointments.pkl"):
         try:
             with open(file_name, "wb") as file:
-                pickle.dump(Appointment.all_appointments, file)
+                pickle.dump(Appointment.all_appointment_objects, file)
             print(f"Appointments have been saved to {file_name}.")
         except:
             print("Unable to save appointments")
@@ -78,11 +81,33 @@ class Appointment:
     def load_appointments(file_name="appointments.pkl"):
         try:
             with open(file_name, "rb") as file:
-                Appointment.all_appointments = pickle.load(file)
+                Appointment.all_appointment_objects = pickle.load(file)
             print(f"Appointments have been loaded from {file_name}.")
+
+            # Use the all_users dictionary from User class
+            from user import User
+            all_users_dict = User.all_user_objects  # username -> user object
+
+            # Now loop over each appointment and set the references
+            for appointment_obj in Appointment.all_appointment_objects:
+                try:
+                    patient = all_users_dict[appointment_obj.patient_username]
+                    mhwp = all_users_dict[appointment_obj.mhwp_username]
+                except KeyError:
+                    print(f"Patient and MHWP details could not be found for appointment on {appointment_obj.date_time}")
+                    patient = None 
+                    mhwp = None
+
+                # reinsert appointment details back into appropriate classes
+                if patient and mhwp:
+                    appointment_obj.patientInstance = patient
+                    appointment_obj.mhwpInstance = mhwp
+                    patient.patientCalendar[appointment_obj.date_time] = appointment_obj
+                    mhwp.appointment_calendar[appointment_obj.date_time] = appointment_obj
+
         except FileNotFoundError:
             print(f"No file called {file_name} has been found. Application will start with an empty appointment list.")
-            Appointment.all_appointments = []
-        except:
-            print("Error loading appointments:")
+            Appointment.all_appointment_objects = []
+        except Exception as e:
+            print("The following error occured whilst loading appointments: ", e)
 

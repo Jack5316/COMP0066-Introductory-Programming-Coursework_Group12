@@ -3,6 +3,7 @@ import re
 class User:
     user_dictionary = {}
 
+    all_user_objects = {}
     user_session = None
 
     def __init__(self, first_name, last_name, email, user_type, username, password):
@@ -20,6 +21,8 @@ class User:
         self.user_type = str(user_type)
         self.username = username_clean
         self.password = str(password)
+
+        User.all_user_objects[username_clean] = self
 
     @classmethod
     def display_users(cls):
