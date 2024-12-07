@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from User import User
+from user import User
 from patient import Patient
 from utils import export_appointments_to_ics
 
