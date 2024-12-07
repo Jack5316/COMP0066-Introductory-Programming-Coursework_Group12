@@ -24,7 +24,7 @@ class Appointment:
             self.mhwpInstance.appointment_calendar[self.date_time] = self
         if self.date_time not in self.patientInstance.patientCalendar:
             self.patientInstance.patientCalendar[self.date_time] = self
-        print("Appointment has been confirmed")
+        # print("Appointment has been confirmed")
         # email to patient
         subject = "Appointment Confirmed"
         body = (f"Your appointment with {self.mhwpInstance.first_name} {self.mhwpInstance.last_name} on {self.date_time} has been confirmed.\n\nThank you.")
@@ -32,7 +32,6 @@ class Appointment:
         #email to MHWP
         body_mhwp = (f"You have confirmed an appointment with {self.patientInstance.first_name} {self.patientInstance.last_name} on {self.date_time}.\n\nThank you.")
         send_email([self.mhwpInstance.email], subject, body_mhwp)
-        
         # save appointment changes
         Appointment.save_all_appointments()
 
@@ -44,7 +43,7 @@ class Appointment:
             self.patientInstance.patientCalendar.pop(self.date_time)
         if self.date_time in self.mhwpInstance.appointment_calendar:
             self.mhwpInstance.appointment_calendar.pop(self.date_time)
-        print("Appointment has been cancelled")
+        # print("Appointment has been cancelled")
         # email to patient
         subject = "Appointment Cancelled"
         body = (f"Your appointment with {self.mhwpInstance.first_name} {self.mhwpInstance.last_name} on {self.date_time} has been cancelled.\n\nThank you.")
@@ -84,11 +83,3 @@ class Appointment:
         except:
             print("Error loading appointments:")
 
-# create a patient and practioner 
-
-# test if confirm appointment works 
-# make an appointment with patient  
-# print out patient calendar to make sure it works
-# run confirm / run cancel 
-
-# check both patient and practioner calendar to make sure appropriate change has taken place

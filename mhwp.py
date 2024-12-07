@@ -96,20 +96,6 @@ class MHWP(User):
         else:
             print(f"No appointments scheduled between in given time range.")
 
-    def cancel_appointment(self, appointment):
-        """Cancel an appointment by updating its status."""
-        if appointment.status == "cancelled":
-            print(
-                f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} is already cancelled.")
-        else:
-            appointment.cancel()  # Use the cancel method from the Appointment class
-            print(
-                f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} has been cancelled.")
-            # Remove the appointment from the MHWP calendar
-            if appointment.date_time in self.appointment_calendar:
-                self.appointment_calendar.pop(appointment.date_time)
-            print("No appointments scheduled between the selected dates.")
-
     # CONFIRM APPOINTMENT
 
     def confirm_appointment(self, appointment):
@@ -311,22 +297,6 @@ class MHWP(User):
 
 
 
-
-
-
-
-
-   
-
-
-
-
-            
-            
-
-    
-   
-    
     def display_conditions(self, predefined_conditions):
         print("Please select a condition from the following list:")
         for i, condition in enumerate(predefined_conditions, start=1):
