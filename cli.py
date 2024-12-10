@@ -111,9 +111,7 @@ def patient_menu(patient):
         elif choice == "4":
             Patient.searchExercises()
         elif choice == "5":
-            appointment_time = patient.bookAppointment()
-            if appointment_time:
-                print(f"Appointment requested for {appointment_time}.")
+            bookAppointment(patient)
         elif choice == "6":
             patient.displayAllAppointments()
         elif choice == "7":
@@ -128,6 +126,43 @@ def patient_menu(patient):
             break
         else:
             print("Invalid choice. Please try again.")
+
+def bookAppointment(patient):
+    #for booking different types of appointments
+    print("\n--- Appointment Booking ---")
+    print("1. Book a Regular Appointment")
+    print("2. Book the Soonest Available Appointment")
+    print("3. Book an Emergency Appointment")
+    print("4. Return to Patient Menu")
+    
+    while True:
+        try:
+            choice = int(input("Enter your choice (1-4): "))
+            if choice == 1:
+                print("\nBooking a Regular Appointment...")
+                appointment_time = patient.bookAppointment()
+                if appointment_time:
+                    print(f"Appointment successfully requested for {appointment_time}.")
+                break
+            elif choice == 2:
+                print("\nBooking the Soonest Available Appointment...")
+                appointment_time = patient.bookSoonestAppointment()
+                if appointment_time:
+                    print(f"Successfully booked the soonest appointment for {appointment_time}.")
+                break
+            elif choice == 3:
+                print("\nBooking an Emergency Appointment...")
+                appointment_time = patient.emergencyAppointment()
+                if appointment_time:
+                    print(f"Successfully booked an emergency appointment for {appointment_time}.")
+                break
+            elif choice == 4:
+                print("Returning to Patient Menu...")
+                break
+            else:
+                print("Invalid choice. Please select a number between 1 and 4.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
 
 def mhwp_menu(mhwp):
     while True:
