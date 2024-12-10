@@ -17,7 +17,7 @@ class MHWP(User):
 
     # SET UNAVAILABLE TIME PERIOD E.G. HOLIDAYS
 
-    def set_unavailable_period(self, start_date, end_date):
+        def set_unavailable_period(self, start_date, end_date):
         """Set a period during which the MHWP is unavailable."""
         # Validate the date range
         try:
@@ -31,11 +31,6 @@ class MHWP(User):
             print("Error: Start date must be earlier than end date.")
             return
 
-        # Add the additional check here to ensure the end date is after the start date
-        if end_datetime <= start_datetime:
-            print("Error: End date must be after start date.")
-            return
-
         # Mark the unavailable period
         if not hasattr(self, 'unavailable_periods'):
             self.unavailable_periods = []  # Initialize if not already present
@@ -43,18 +38,111 @@ class MHWP(User):
         self.unavailable_periods.append((start_datetime, end_datetime))
         print(f"Unavailable period set from {start_date} to {end_date}.")
 
+    def view_unavailable_periods(self):
+        """View the existing unavailable periods."""
+        if not self.unavailable_periods:
+            print("No unavailable periods set.")
+            return
 
-    def cli_set_unavailable_period(self):
-        """Handle the CLI for setting unavailable periods."""
+        print("\nExisting Unavailable Periods:")
+        for idx, (start, end) in enumerate(self.unavailable_periods, 1):
+            print(f"{idx}. From {start.date()} to {end.date()}")
+
+        while True:
+            try:
+                print("\nSelect a period to manage or enter 0 to go back to the main menu.")
+                choice = int(input("Enter the number of the period (or 0 to go back): "))
+
+                if choice == 0:
+                    return   # Return to the main menu
+
+                if 1 <= choice <= len(self.unavailable_periods):
+                    selected_period = self.unavailable_periods[choice - 1]
+                    self.manage_selected_period(choice - 1, selected_period)
+                else:
+                    print("Invalid choice. Please select a valid period number or 0 to go back.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+    def manage_selected_period(self, period_index, period):
+        """Manage a selected unavailable period."""
+        while True:
+            print(f"\nManaging Period: From {period[0].date()} to {period[1].date()}")
+            print("1. Edit this period")
+            print("2. Cancel this period")
+            print("3. Go back to the period list")
+            choice = input("Enter your choice: ")
+
+            if choice == "1":
+                self.edit_unavailable_period(period_index)
+                self.view_unavailable_periods()
+                return  # Return to the period list after editing
+            elif choice == "2":
+                self.cancel_unavailable_period(period_index)
+                # Check if no periods are left after cancellation
+                if not self.unavailable_periods:
+                    print("No unavailable periods set.")
+                    return
+
+                print("Remaining unavailable periods:")
+                self.view_unavailable_periods()
+                return
+            elif choice == "3":
+                return  # Go back to the period list
+            else:
+                print("Invalid choice. Please enter a number between 1 and 3.")
+
+
+    def edit_unavailable_period(self, period_index):
+        """Edit a specific unavailable period."""
         try:
-            start_date = input("Enter the start date for the unavailable period (YYYY-MM-DD): ")
-            end_date = input("Enter the end date for the unavailable period (YYYY-MM-DD): ")
+            start_date = input("Enter the new start date (YYYY-MM-DD): ")
+            end_date = input("Enter the new end date (YYYY-MM-DD): ")
             start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
             end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            start_datetime = datetime.combine(start_date, datetime.min.time())
+            end_datetime = datetime.combine(end_date, datetime.max.time())
 
-            self.set_unavailable_period(start_date, end_date)
+            if start_datetime >= end_datetime:
+                print("Error: Start date must be earlier than end date.")
+                return
+
+            self.unavailable_periods[period_index] = (start_datetime, end_datetime)
+            print(f"Unavailable period updated to {start_date} to {end_date}.")
         except ValueError:
             print("Invalid date format. Please enter the dates in YYYY-MM-DD format.")
+
+    def cancel_unavailable_period(self, period_index):
+        """Cancel a specific unavailable period."""
+        removed_period = self.unavailable_periods.pop(period_index)
+        print(f"Unavailable period from {removed_period[0].date()} to {removed_period[1].date()} canceled.")
+
+
+    def cli_set_unavailable_period(self):
+        """Handle the CLI for managing unavailable periods."""
+        while True:
+            print("\nUnavailable Period Management:")
+            print("1. View unavailable periods")
+            print("2. Set a new unavailable period")
+            print("3. Exit")
+
+            choice = input("Enter your choice: ")
+            if choice == "1":
+                self.view_unavailable_periods()
+            elif choice == "2":
+                try:
+                    start_date = input("Enter the start date for the unavailable period (YYYY-MM-DD): ")
+                    end_date = input("Enter the end date for the unavailable period (YYYY-MM-DD): ")
+                    start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+                    end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+                    self.set_unavailable_period(start_date, end_date)
+                except ValueError:
+                    print("Invalid date format. Please enter the dates in YYYY-MM-DD format.")
+            elif choice == "3":
+                print("Exiting Unavailable Period Management.")
+                break
+            else:
+                print("Invalid choice. Please enter a number between 1, 2, and 5.")
 
 
     # DISPLAY CALENDAR
