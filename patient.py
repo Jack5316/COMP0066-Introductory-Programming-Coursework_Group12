@@ -2,6 +2,7 @@ from time import gmtime, strftime
 from user import User
 from datetime import datetime, timedelta
 from utils import export_appointments_to_ics
+from operator import itemgetter
 
 
 class Patient(User):
@@ -18,17 +19,39 @@ class Patient(User):
         mhwpAsigned.all_patients.append(self)
 
     def moodTracker(self):
-        moods = {"Dark Green": "Very Happy", "Light Green": "Happy", "Yellow":"Positive Neutral", "Orange":"Negative Neutral", "Light Red":"Sad", "Dark Red":"Very Sad"}
-        moodColours = {1:"Dark Green", 2:"Light Green", 3:"Yellow", 4:"Orange", 5:"Light Red", 6:"Dark Red"}
-
+        moods = {"Dark Green": "Very Happy", 
+                 "Light Green": "Happy", 
+                 "Yellow":"Positive Neutral", 
+                "Orange":"Negative Neutral", 
+                "Light Red":"Sad", 
+                "Dark Red":"Very Sad"}
+        
+        moodColours = {1: ("\033[32m1", "Dark Green"), 
+            2: ("\033[92m2", "Light Green"), 
+            3: ("\033[93m3", "Yellow"), 
+            4: ("\033[33m4", "Orange"), 
+            5: ("\033[31m5", "Light Red"),  
+            6: ("\033[91m6", "Dark Red")}
+        
+        reset_color = "\033[0m"
+        
+        #arrow colour scale
+        print("\nMood Scale:")
+        print(f"\033[92m<{'-' * 15}\033[93m{'-' * 15}\033[91m{'-' * 15}>{reset_color}")
+        print(f"\033[92mPositive {' ' * 10}\033[93mNeutral {' ' * 10}\033[91mNegative{reset_color}")
+        
         while True:
             try:
-                colourCode = int(input(f"Please input the number that matches your mood colour: {moodColours}: "))
+                print("\nMood Options:")
+                for i, (number, colourName) in moodColours.items():
+                    print(f"{number}", end=" ")
+                    
+                colourCode = int(input(f"\033[0m\n\nPlease input the number that matches your mood colour (1-6): "))
                 if colourCode not in moodColours:
                     print("Please enter a valid option, 1-6.")
                 else:
-                    colourValue = moodColours[colourCode]
-                    moodDescription = moods[colourValue]
+                    _, colourName = moodColours[colourCode]
+                    moodDescription = moods[colourName]
                     comment=input("Please add any comments about your mood: ")
                     break
 
@@ -221,6 +244,9 @@ class Patient(User):
             if currentAppointmentOccurence[0] == datetime.strftime(appointmentDate,"%Y-%m-%d"):
                 # append the taken time to list IF the date is the same
                 currentMHWPAppointments.append(int(currentAppointmentOccurence[1].split(":")[0]))
+        
+        
+
       
         # find potential times based on MHWP calendar
         potentialTimes = []
@@ -495,4 +521,75 @@ class Patient(User):
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
 
+
+    def show_all_journal_entries(self):
+        if not self.journalEntries:
+            print("No journal entries found.")
+        else:
+            print("All journal entries:")
+            for jour_entry in self.journalEntries:
+                print("Date/Time:", jour_entry["Date/Time"])
+                print("Journal Entry:", jour_entry["Journal Entry"])
+                print("---")
+    
+    def search_journal_entries(self):
+
+        # take a input of a keyword
+        # rank all journal entries on the amount of times the keyword comes up
+        # show top 3 journal entries (if there are 3) with most occurences of keyword
+        # display the number of keyword occurences with each journal entry above
+
+        if not self.journalEntries:
+            print("No journal entries found.")
+            return 
+        
+        while True:
+            keyword = input("Enter the keyword/phrase you would like to search by (or type 0 to exit):")
+
+            if keyword == "0":
+                print("Cancelling the journal search")
+                return False
+            
+            if len(keyword.split(" ")) > 1:
+                print("Please only enter one word with no spaces.")
+                continue 
+
+            break 
+        
+        occurence_index = [] 
+        lowercase_keyword = keyword.lower()
+
+        for entry in self.journalEntries:
+            journal_text = entry["Journal Entry"]
+            all_words_in_text = journal_text.lower().split()
+            word_count = all_words_in_text.count(lowercase_keyword)
+
+            if word_count > 0:
+                occurence_index.append((word_count, entry))
+        
+        if len(occurence_index) == 0:
+            print("No journal entries found with keyword {0}".format(keyword))
+            return False
+
+        number = 3
+        if len(occurence_index) < 3:
+            number = len(occurence_index)
+
+        occurence_index.sort(key=itemgetter(0), reverse=True)
+
+        best_matches = occurence_index[:number]
+
+        if number != 3:
+            if number == 1:
+                print(f"Only journal entry containing '{keyword}':")
+            else:
+                print(f"Only {number} journal entries containing '{keyword}':")
+        else:
+            print(f"Top 3 journal entries containing '{keyword}':")
+            
+        for count, entry in best_matches:
+            print("Date/Time:", entry["Date/Time"])
+            print("Journal Entry:", entry["Journal Entry"])
+            print(f"Occurrences of '{keyword}': {count}")
+            print("---")
 

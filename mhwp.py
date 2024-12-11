@@ -17,7 +17,7 @@ class MHWP(User):
 
     # SET UNAVAILABLE TIME PERIOD E.G. HOLIDAYS
 
-        def set_unavailable_period(self, start_date, end_date):
+    def set_unavailable_period(self, start_date, end_date):
         """Set a period during which the MHWP is unavailable."""
         # Validate the date range
         try:
@@ -470,11 +470,12 @@ class MHWP(User):
 
     def display_patients_with_moods(self):
         mood_colors = {
-            1: "\033[91m",  # Red for very bad mood
-            2: "\033[93m",  # Yellow for bad mood
-            3: "\033[92m",  # Green for neutral mood
-            4: "\033[96m",  # Cyan for good mood
-            5: "\033[94m",  # Blue for very good mood
+            1: "\033[91m",  # dark red for very bad mood
+            2: "\033[31m",  # light red for bad mood
+            3: "\033[33m",  # orange for negative neutral mood
+            4: "\033[93m",  # yellow for positive neutral mood
+            5: "\033[92m",  # light green for good mood
+            6: "\033[32m",  # dark green for very good mood
         }
         reset_color = "\033[0m"  # Reset color to default
 
@@ -494,10 +495,3 @@ class MHWP(User):
             )
             print("-" * 30)
 
-    def update_patient_health_record(self, patient, new_entry):
-        # Add a new entry to the specified patient's health record.
-        pass
-
-    def display_summary_of_all_patients(self):
-        # Display a summary of all patients, including mood tracking plots.
-        pass
