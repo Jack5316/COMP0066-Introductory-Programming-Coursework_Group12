@@ -96,7 +96,8 @@ def patient_menu(patient):
         print("5. Book an Appointment")
         print("6. View Appointments")
         print("7. Cancel an Appointment")
-        print("8. Logout")
+        print("8. Export Appointments ")
+        print("9. Logout")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -122,6 +123,8 @@ def patient_menu(patient):
             else:
                 print("No appointment found at the given time.")
         elif choice == "8":
+            patient.cli_export_appointments()
+        elif choice == "9":
             User.logout()
             break
         else:
