@@ -17,7 +17,7 @@ class MHWP(User):
 
     # SET UNAVAILABLE TIME PERIOD E.G. HOLIDAYS
 
-        def set_unavailable_period(self, start_date, end_date):
+    def set_unavailable_period(self, start_date, end_date):
         """Set a period during which the MHWP is unavailable."""
         # Validate the date range
         try:
