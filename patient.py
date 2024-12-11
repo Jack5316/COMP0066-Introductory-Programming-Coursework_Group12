@@ -18,17 +18,39 @@ class Patient(User):
         mhwpAsigned.all_patients.append(self)
 
     def moodTracker(self):
-        moods = {"Dark Green": "Very Happy", "Light Green": "Happy", "Yellow":"Positive Neutral", "Orange":"Negative Neutral", "Light Red":"Sad", "Dark Red":"Very Sad"}
-        moodColours = {1:"Dark Green", 2:"Light Green", 3:"Yellow", 4:"Orange", 5:"Light Red", 6:"Dark Red"}
-
+        moods = {"Dark Green": "Very Happy", 
+                 "Light Green": "Happy", 
+                 "Yellow":"Positive Neutral", 
+                "Orange":"Negative Neutral", 
+                "Light Red":"Sad", 
+                "Dark Red":"Very Sad"}
+        
+        moodColours = {1: ("\033[32m1", "Dark Green"), 
+            2: ("\033[92m2", "Light Green"), 
+            3: ("\033[93m3", "Yellow"), 
+            4: ("\033[33m4", "Orange"), 
+            5: ("\033[31m5", "Light Red"),  
+            6: ("\033[91m6", "Dark Red")}
+        
+        reset_color = "\033[0m"
+        
+        #arrow colour scale
+        print("\nMood Scale:")
+        print(f"\033[92m<{'-' * 15}\033[93m{'-' * 15}\033[91m{'-' * 15}>{reset_color}")
+        print(f"\033[92mPositive {' ' * 10}\033[93mNeutral {' ' * 10}\033[91mNegative{reset_color}")
+        
         while True:
             try:
-                colourCode = int(input(f"Please input the number that matches your mood colour: {moodColours}: "))
+                print("\nMood Options:")
+                for i, (number, colourName) in moodColours.items():
+                    print(f"{number}", end=" ")
+                    
+                colourCode = int(input(f"\033[0m\n\nPlease input the number that matches your mood colour (1-6): "))
                 if colourCode not in moodColours:
                     print("Please enter a valid option, 1-6.")
                 else:
-                    colourValue = moodColours[colourCode]
-                    moodDescription = moods[colourValue]
+                    _, colourName = moodColours[colourCode]
+                    moodDescription = moods[colourName]
                     comment=input("Please add any comments about your mood: ")
                     break
 

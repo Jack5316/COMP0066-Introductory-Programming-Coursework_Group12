@@ -495,9 +495,3 @@ class MHWP(User):
             )
             print("-" * 30)
 
-
-practioner = MHWP("John", "Smith", "auctionsite097@gmail.com", username="bland", password="881")
-
-practioner.set_unavailable_period()
-
-print(practioner.unavailable_periods)
