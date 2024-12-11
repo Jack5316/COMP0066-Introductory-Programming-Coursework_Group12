@@ -243,6 +243,9 @@ class Patient(User):
             if currentAppointmentOccurence[0] == datetime.strftime(appointmentDate,"%Y-%m-%d"):
                 # append the taken time to list IF the date is the same
                 currentMHWPAppointments.append(int(currentAppointmentOccurence[1].split(":")[0]))
+        
+        
+
       
         # find potential times based on MHWP calendar
         potentialTimes = []
@@ -518,3 +521,22 @@ class Patient(User):
             print("Invalid date format. Please use YYYY-MM-DD.")
 
 
+    def show_all_journal_entries(self):
+        if not self.journalEntries:
+            print("No journal entries found.")
+        else:
+            print("All journal entries:")
+            for jour_entry in self.journalEntries:
+                print("Date/Time:", jour_entry["Date/Time"])
+                print("Journal Entry:", jour_entry["Journal Entry"])
+                print("---")
+    
+    def search_journal_entries(self):
+
+        # take a input of a keyword (s)
+
+        pass
+
+patient_example = Patient("Patient", "Zeri", "auctionsite097@gmail.com", user_type="patient", username="diseas", password="881",
+                  mhwpAsigned="practioner", emergencyEmail="auctionsite097@gmail.com", colourCode=None)
+patient_example.journal()
