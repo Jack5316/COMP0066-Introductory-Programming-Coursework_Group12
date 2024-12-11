@@ -96,7 +96,10 @@ def patient_menu(patient):
         print("5. Book an Appointment")
         print("6. View Appointments")
         print("7. Cancel an Appointment")
-        print("8. Logout")
+        print("8. Export Appointments ")
+        print("9. See All Journal Entries")
+        print("10. Search Journal Entry by Keyword")
+        print("11. Logout")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -111,9 +114,7 @@ def patient_menu(patient):
         elif choice == "4":
             Patient.searchExercises()
         elif choice == "5":
-            appointment_time = patient.bookAppointment()
-            if appointment_time:
-                print(f"Appointment requested for {appointment_time}.")
+            bookAppointment(patient)
         elif choice == "6":
             patient.displayAllAppointments()
         elif choice == "7":
@@ -124,10 +125,53 @@ def patient_menu(patient):
             else:
                 print("No appointment found at the given time.")
         elif choice == "8":
+            patient.cli_export_appointments()
+        elif choice == "9":
+            patient.show_all_journal_entries()
+        elif choice == "10":
+            patient.search_journal_entries()
+        elif choice == "11":
             User.logout()
             break
         else:
             print("Invalid choice. Please try again.")
+
+def bookAppointment(patient):
+    #for booking different types of appointments
+    print("\n--- Appointment Booking ---")
+    print("1. Book a Regular Appointment")
+    print("2. Book the Soonest Available Appointment")
+    print("3. Book an Emergency Appointment")
+    print("4. Return to Patient Menu")
+    
+    while True:
+        try:
+            choice = int(input("Enter your choice (1-4): "))
+            if choice == 1:
+                print("\nBooking a Regular Appointment...")
+                appointment_time = patient.bookAppointment()
+                if appointment_time:
+                    print(f"Appointment successfully requested for {appointment_time}.")
+                break
+            elif choice == 2:
+                print("\nBooking the Soonest Available Appointment...")
+                appointment_time = patient.bookSoonestAppointment()
+                if appointment_time:
+                    print(f"Successfully booked the soonest appointment for {appointment_time}.")
+                break
+            elif choice == 3:
+                print("\nBooking an Emergency Appointment...")
+                appointment_time = patient.emergencyAppointment()
+                if appointment_time:
+                    print(f"Successfully booked an emergency appointment for {appointment_time}.")
+                break
+            elif choice == 4:
+                print("Returning to Patient Menu...")
+                break
+            else:
+                print("Invalid choice. Please select a number between 1 and 4.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
 
 def mhwp_menu(mhwp):
     while True:

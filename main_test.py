@@ -13,7 +13,7 @@ patient_example = Patient("Patient", "Zeri", "auctionsite097@gmail.com", user_ty
                   mhwpAsigned=practioner, emergencyEmail="auctionsite097@gmail.com", colourCode=None)
 
 # ONLY run load_appointments after setting up basic users 
-Appointment.load_appointments()
+# Appointment.load_appointments()
 
 
 # print(Appointment.all_appointment_objects)
@@ -24,4 +24,7 @@ Appointment.load_appointments()
 # practioner.cli_confirm_appointment()
 
 
-print(Appointment.all_appointment_objects)
+# print(Appointment.all_appointment_objects)
+
+
+# patient_example.search_journal_entries()
