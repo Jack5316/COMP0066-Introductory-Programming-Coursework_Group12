@@ -2,6 +2,7 @@ from time import gmtime, strftime
 from user import User
 from datetime import datetime, timedelta
 from utils import export_appointments_to_ics
+from operator import itemgetter
 
 
 class Patient(User):
@@ -533,10 +534,62 @@ class Patient(User):
     
     def search_journal_entries(self):
 
-        # take a input of a keyword (s)
+        # take a input of a keyword
+        # rank all journal entries on the amount of times the keyword comes up
+        # show top 3 journal entries (if there are 3) with most occurences of keyword
+        # display the number of keyword occurences with each journal entry above
 
-        pass
+        if not self.journalEntries:
+            print("No journal entries found.")
+            return 
+        
+        while True:
+            keyword = input("Enter the keyword/phrase you would like to search by (or type 0 to exit):")
 
-patient_example = Patient("Patient", "Zeri", "auctionsite097@gmail.com", user_type="patient", username="diseas", password="881",
-                  mhwpAsigned="practioner", emergencyEmail="auctionsite097@gmail.com", colourCode=None)
-patient_example.journal()
+            if keyword == "0":
+                print("Cancelling the journal search")
+                return False
+            
+            if len(keyword.split(" ")) > 1:
+                print("Please only enter one word with no spaces.")
+                continue 
+
+            break 
+        
+        occurence_index = [] 
+        lowercase_keyword = keyword.lower()
+
+        for entry in self.journalEntries:
+            journal_text = entry["Journal Entry"]
+            all_words_in_text = journal_text.lower().split()
+            word_count = all_words_in_text.count(lowercase_keyword)
+
+            if word_count > 0:
+                occurence_index.append((word_count, entry))
+        
+        if len(occurence_index) == 0:
+            print("No journal entries found with keyword {0}".format(keyword))
+            return False
+
+        number = 3
+        if len(occurence_index) < 3:
+            number = len(occurence_index)
+
+        occurence_index.sort(key=itemgetter(0), reverse=True)
+
+        best_matches = occurence_index[:number]
+
+        if number != 3:
+            if number == 1:
+                print(f"Only journal entry containing '{keyword}':")
+            else:
+                print(f"Only {number} journal entries containing '{keyword}':")
+        else:
+            print(f"Top 3 journal entries containing '{keyword}':")
+            
+        for count, entry in best_matches:
+            print("Date/Time:", entry["Date/Time"])
+            print("Journal Entry:", entry["Journal Entry"])
+            print(f"Occurrences of '{keyword}': {count}")
+            print("---")
+
