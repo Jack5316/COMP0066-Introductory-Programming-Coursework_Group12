@@ -15,6 +15,7 @@ class Patient(User):
         self.conditions = []
         self.notes = []     # each notes entry is in form [time,commments,mhwp_name]
         self.emergencyEmail = emergencyEmail
+        self
         self.colourCode = colourCode
         mhwpAsigned.all_patients.append(self)
 
@@ -63,7 +64,7 @@ class Patient(User):
         # moodEntry format: [time, description, comments]
         moodEntry = [timeStamp,moodDescription,comment]
         self.mood.append(moodEntry)
-        print("Mood entry added:")
+        print("\n--- Mood Entry Added ---")
         print("Date/Time:", moodEntry[0])
         print("Mood:", moodEntry[1])
         print("Comments:", moodEntry[2])
@@ -74,20 +75,23 @@ class Patient(User):
         journalEntry={"Date/Time": timeStamp, "Journal Entry": journalText}
         self.journalEntries.append(journalEntry)
 
-        print("Journal entry added:")
+        print(("\n--- Journal Entry Added ---"))
         for key, value in journalEntry.items():
             print(f"{key}: {value}")
 
     def updateEmergencyContact(self):
         while True:
-            updatedEmergencyEmail = input("Please enter your updated emergency email or type 'EXIT' to quit: ")
-            if updatedEmergencyEmail.upper() == 'EXIT':
-                print("Exiting without updating details.")
+            try:
+                updatedEmergencyEmail = input("Please enter your updated emergency email or type 'EXIT' to quit: ")
+                if updatedEmergencyEmail.upper() == 'EXIT':
+                    print("Exiting without updating details.")
+                    break
+                User.email_validate(updatedEmergencyEmail)
+                self.emergencyEmail = updatedEmergencyEmail
+                print("Emergency email updated successfully.")
                 break
-            else:
-                self.emergencyEmail=updatedEmergencyEmail
-                print("Your details have been successfuly updated.")
-                break
+            except ValueError as e:
+                print(f"Error: {e}")
 
     @staticmethod
     def getUserAppointmentDate():
@@ -361,16 +365,15 @@ class Patient(User):
 
                     appointmentDate = nextDay.strftime("%Y-%m-%d")
                     finalDateTime = f"{appointmentDate} {selectedTime:02d}:00"
-                    print(f"Appointment successfully booked for {finalDateTime}.")
+                    from appointment import Appointment
+                    Appointment(self,self.mhwpAsigned,finalDateTime)
+                    print(f"Appointment has been requested for the following time and date: \n{finalDateTime}.")
                     return finalDateTime
                 else:
                     nextDay += timedelta(days=1)
                    
     def emergencyAppointment(self):
-        """
-        Allows the patient to book an emergency appointment on the same day.
-        The user is prompted to select a time and confirm the appointment.
-        """
+        #Allows the patient to book an emergency appointment on the same day.
         currentDate = datetime.now().date()
         currentTime = datetime.now().time()
         mhwpStart = int(self.mhwpAsigned.working_hours["start"].split(":")[0])
@@ -378,39 +381,38 @@ class Patient(User):
 
         print("This is an emergency booking. If it is a medical emergency, please call 999.")
 
+        # Get already booked appointments for today
+        mhwpAppointments = []
+        for datetime_str in self.mhwpAsigned.appointment_calendar.keys():
+            appt_time = datetime_str.split(" ")[1]
+            hour = int(appt_time.split(":")[0])
+            mhwpAppointments.append(hour)
+
         # check available slots for the remainder of the day
-        potentialTimes = []
+        availableTimes = []
         for hour in range(mhwpStart, mhwpFinish):
             appointmentTime = datetime.combine(currentDate, datetime.min.time()) + timedelta(hours=hour)
             if (
                 appointmentTime.time() > currentTime and
+                hour not in mhwpAppointments and
                 all(not (start <= appointmentTime <= end) for start, end in self.mhwpAsigned.unavailable_periods)
             ):
-                potentialTimes.append(hour)
+                availableTimes.append(hour)
 
-        if not potentialTimes:
+        if not availableTimes:
             print("No emergency slots are available today.")
             return False
         
-        mhwpAppointments = self.mhwpAsigned.appointment_calendar.keys()
-        availableTimes = []
-        for time in potentialTimes:
-            appointmentTime = datetime.combine(currentDate, datetime.min.time()) + timedelta(hours=time)
-            formattedTime = appointmentTime.strftime("%Y-%m-%d %H:%M")
-    
-            if formattedTime not in mhwpAppointments:
-                availableTimes.append(time)
-
-        
         print("Available emergency appointment times today:")
-        for index, hour in enumerate(potentialTimes, start=1):
+        enumAvailableTimes = list(enumerate(availableTimes, start=1))
+        for index, hour in enumAvailableTimes:
             print(f"{index}. {hour:02d}:00")
 
         while True:
             try:
                 choice = int(input("Select a time by entering the corresponding number: "))
-                if 1 <= choice <= len(potentialTimes):
-                    selectedTime = potentialTimes[choice - 1]
+                if 1 <= choice <= len(availableTimes):
+                    selectedTime = enumAvailableTimes[choice - 1][1]
                     appointmentDateTime = datetime.combine(currentDate, datetime.min.time()) + timedelta(hours=selectedTime)
                     print(f"Selected emergency appointment: {appointmentDateTime.strftime('%Y-%m-%d %H:%M')}")
 
@@ -437,17 +439,40 @@ class Patient(User):
 
                     appointmentDate = currentDate.strftime("%Y-%m-%d")
                     finalDateTime = f"{appointmentDate} {selectedTime:02d}:00"
-                    print(f"Emergency appointment successfully booked for {finalDateTime}.")
+                    from appointment import Appointment
+                    Appointment(self,self.mhwpAsigned,finalDateTime)
+                    print(f"Emergency appointment has been requested for the following time and date: \n{finalDateTime}.")
                     return finalDateTime
                 else:
-                    print(f"Invalid choice. Please select a number between 1 and {len(potentialTimes)}.")
+                    print(f"Invalid choice. Please select a number between 1 and {len(availableTimes)}.")
             except ValueError:
                 print("Please enter a valid number.")
     
-    def cancelAppointment(self,appointmentInstance):
-        appointmentInstance.cancel()
-        # send email update 
-        # cancelling an appointment should go into both patient and mhwp calendars and remove them 
+    def cancelAppointment(self, appointmentInstance):
+        if not self.patientCalendar:
+            print("\nNo appointments found.")
+            return
+        print("\nYour appointments:")
+        appointments = list(self.patientCalendar.items())
+        for idx, (datetime_str, appointment) in enumerate(appointments, 1):
+            splitTime = datetime_str.split(" ")
+            print(f"{idx}. Appointment on [{splitTime[0]}] at time [{splitTime[1]}] "
+                f"with practitioner: {appointment.mhwpInstance.first_name} {appointment.mhwpInstance.last_name}")
+        print(f"{len(appointments) + 1}. Return to Patient Menu")
+        while True:
+            try:
+                choice = int(input(f"\nSelect appointment to cancel (1-{len(appointments) + 1}): "))
+                if 1 <= choice <= len(appointments):
+                    appointmentInstance = appointments[choice - 1][1]
+                    appointmentInstance.cancel()
+                    break
+                elif choice == len(appointments) + 1:
+                    print("Returning to Patient Menu...")
+                    break
+                else:
+                    print(f"Invalid choice. Please select a number between 1 and {len(appointments) + 1}.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
 
     def getRecord(self):
         outputString = "{0} {1}".format(self.first_name,self.last_name)
@@ -466,15 +491,20 @@ class Patient(User):
         print(outputString)
 
     def displayAllAppointments(self):
+        if not self.patientCalendar:
+            print("\nNo appointments found.")
+            return
+        print("\n--- All Appointments ---")
         for key in self.patientCalendar.keys():
             splitTime = key.split(" ")
             appointmentObject = self.patientCalendar[key]
+
             print("Appointment on [{0}] at time [{1}] with practitioner: {2} {3}".format(splitTime[0],splitTime[1],appointmentObject.mhwpInstance.first_name,appointmentObject.mhwpInstance.last_name))
 
     @classmethod
     def searchExercises(cls):
         while True:
-            search = input("Please enter your search term or type 'EXIT' to quit: ")
+            search = input("\nPlease enter your search term or type 'EXIT' to quit: ")
             exercises={"Mindfulness": "https://drive.google.com/file/d/19spOJz71lzbZiX5CDX7L-YNXrQutJPJX/view",
                        "Meditation": "https://drive.google.com/file/d/1dcsW9byG8G4Gyb1hFvtFS27LnrBdfvDA/view?usp=sharing",
                        "Breathing": "https://drive.google.com/file/d/19cCxG03o26RJB57g4xMUdyoDQlvaK8vS/view?usp=sharing",
@@ -526,7 +556,7 @@ class Patient(User):
         if not self.journalEntries:
             print("No journal entries found.")
         else:
-            print("All journal entries:")
+            print("\n--- All Journal Entries ---")
             for jour_entry in self.journalEntries:
                 print("Date/Time:", jour_entry["Date/Time"])
                 print("Journal Entry:", jour_entry["Journal Entry"])
@@ -544,7 +574,7 @@ class Patient(User):
             return 
         
         while True:
-            keyword = input("Enter the keyword/phrase you would like to search by (or type 0 to exit):")
+            keyword = input("Enter the keyword/phrase you would like to search by (or type 0 to exit): ")
 
             if keyword == "0":
                 print("Cancelling the journal search")

@@ -30,7 +30,7 @@ class Appointment:
             self.mhwpInstance.appointment_calendar[self.date_time] = self
         if self.date_time not in self.patientInstance.patientCalendar:
             self.patientInstance.patientCalendar[self.date_time] = self
-        # print("Appointment has been confirmed")
+        print("Appointment has been confirmed.")
         # email to patient
         subject = "Appointment Confirmed"
         body = (f"Your appointment with {self.mhwpInstance.first_name} {self.mhwpInstance.last_name} on {self.date_time} has been confirmed.\n\nThank you.")
@@ -49,7 +49,7 @@ class Appointment:
             self.patientInstance.patientCalendar.pop(self.date_time)
         if self.date_time in self.mhwpInstance.appointment_calendar:
             self.mhwpInstance.appointment_calendar.pop(self.date_time)
-        # print("Appointment has been cancelled")
+        print("Appointment has been cancelled.")
         # email to patient
         subject = "Appointment Cancelled"
         body = (f"Your appointment with {self.mhwpInstance.first_name} {self.mhwpInstance.last_name} on {self.date_time} has been cancelled.\n\nThank you.")

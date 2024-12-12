@@ -15,8 +15,8 @@ Subject: {subject}
         server.starttls() 
         server.login(sender_email, sender_password) 
         server.sendmail(sender_email, recipient_emails, message)  
-        print("Email sent")
+        print("Confirmation email sent")
     except Exception:
-        print("Failed to send email")
+        print("Failed to send confirmation email")
     finally:
         server.quit()
