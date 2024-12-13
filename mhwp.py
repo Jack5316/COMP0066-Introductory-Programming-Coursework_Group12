@@ -149,10 +149,11 @@ class MHWP(User):
 
     def display_calendar(self, start_date, end_date):
         """Display appointments scheduled within a given date range, including unavailable periods."""
-
+        start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+        end_datetime = datetime.strptime(end_date, "%Y-%m-%d")        
         # Convert dates to datetime with range covering the whole days
-        start_datetime = datetime.combine(start_date, datetime.min.time())
-        end_datetime = datetime.combine(end_date, datetime.max.time())
+    #    start_datetime = datetime.combine(start_date, datetime.min.time())
+     #   end_datetime = datetime.combine(end_date, datetime.max.time())
 
         # Validate date range
         if start_datetime >= end_datetime:
@@ -212,9 +213,14 @@ class MHWP(User):
         # Check if there are any appointments to confirm
         appointments_to_confirm = [
             appt for appt in self.appointment_calendar.values()
-            if appt.status == "requested" and start_date <= appt.date_time.date() <= end_date
+            if appt.status == "requested" and
+            (
+                (isinstance(appt.date_time, str) and
+                    start_date <= datetime.strptime(appt.date_time, "%Y-%m-%d %H:%M").date() <= end_date) or
+                (isinstance(appt.date_time, datetime) and
+                    start_date <= appt.date_time.date() <= end_date)
+            )
         ]
-
         if appointments_to_confirm:
             for idx, appt in enumerate(appointments_to_confirm, start=1):
                 print(f"{idx}. {appt.date_time} - {appt.patientInstance.first_name} {appt.patientInstance.last_name}")
@@ -268,12 +274,19 @@ class MHWP(User):
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
             return
-
+        
         # Check if there are any appointments to cancel (allow for both 'requested' and 'confirmed' statuses)
+
         appointments_to_cancel = [
             appt for appt in self.appointment_calendar.values()
-            if start_date <= appt.date_time.date() <= end_date and appt.status != "cancelled"
-        ]
+            if appt.status == "confirmed" and
+            (
+                (isinstance(appt.date_time, str) and
+                    start_date <= datetime.strptime(appt.date_time, "%Y-%m-%d %H:%M").date() <= end_date) or
+                (isinstance(appt.date_time, datetime) and
+                    start_date <= appt.date_time.date() <= end_date)
+            )
+        ]      
 
         if appointments_to_cancel:
             for idx, appt in enumerate(appointments_to_cancel, start=1):
@@ -362,6 +375,12 @@ class MHWP(User):
         """
         filename_prefix = f"{self.first_name}_{self.last_name}"
         print(f"Exporting {filename_prefix}'s calendar...")
+
+        calendar_with_datetime = {}
+        for date_time, appointment in self.patientCalendar.items():
+            if isinstance(appointment.date_time, str):
+                appointment.date_time = datetime.strptime(appointment.date_time, "%Y-%m-%d %H:%M")
+            calendar_with_datetime[date_time] = appointment
         export_appointments_to_ics(self.appointment_calendar, start_date, end_date, filename_prefix, is_mhwp=True)
 
     def cli_export_appointments(self):
@@ -469,29 +488,35 @@ class MHWP(User):
 
 
     def display_patients_with_moods(self):
-        mood_colors = {
-            1: "\033[91m",  # dark red for very bad mood
-            2: "\033[31m",  # light red for bad mood
-            3: "\033[33m",  # orange for negative neutral mood
-            4: "\033[93m",  # yellow for positive neutral mood
-            5: "\033[92m",  # light green for good mood
-            6: "\033[32m",  # dark green for very good mood
+        moods = {
+            "Very Happy": "\033[32m",  # dark green
+            "Happy": "\033[92m",  # light green
+            "Positive Neutral": "\033[93m",  # yellow
+            "Negative Neutral": "\033[33m",  # orange
+            "Sad": "\033[31m",  # light red
+            "Very Sad": "\033[91m"  # dark red
         }
         reset_color = "\033[0m"  # Reset color to default
 
-        print("\033[1mPatient Mood Tracker\033[0m")  # Bold header
+        print("\n--- Patient Mood Tracker ---")
         print("-" * 30)
-        for email, data in self.patients.items():
-            if data["mood"]:
-                current_mood = data["mood"][-1]  # Use the last mood value
-                mood_color = mood_colors.get(current_mood, reset_color)
+
+        if not self.all_patients:
+            print("No patients found.")
+            return
+
+        for patient in self.all_patients:
+            print(f"Patient: {patient.first_name} {patient.last_name}")
+            if patient.mood:
+                # Get the most recent mood entry
+                latest_mood = patient.mood[-1]  # Format is [time, description, comments]
+                mood_description = latest_mood[1]  # Get the mood description
+                mood_color = moods.get(mood_description, reset_color)
+                
+                print(f"Latest Mood ({latest_mood[0]}):")
+                print(f"{mood_color}{mood_description}{reset_color}")
+                print(f"Comments: {latest_mood[2]}")
             else:
-                current_mood = "No mood data"
-                mood_color = reset_color
-            
-            print(
-                f"{mood_color}Email: {email}\n"
-                f"Current Mood: {current_mood}\033[0m\n"  # Reset color after each section
-            )
+                print("No mood data recorded")
             print("-" * 30)
 

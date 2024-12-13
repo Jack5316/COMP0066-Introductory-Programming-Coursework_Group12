@@ -3,10 +3,12 @@ from user import User
 from admin import Admin
 from patient import Patient
 from mhwp import MHWP
+from appointment import Appointment
 
 
 
 def main_menu():
+    Appointment.load_appointments()
     while True:
         print("\n--- Breeze Mental Health Management System ---")
         print("1. Login")
@@ -58,12 +60,7 @@ def admin_menu(admin):
             else:
                 print("Invalid patient or MHWP username.")
         elif choice == "2":
-            username = input("Enter username to edit: ").strip()
-            user = get_user_instance(username)
-            if user:
-                field = input("Enter the field to update: ").strip()
-                value = input(f"Enter new value for {field}: ").strip()
-                admin.edit_user_info(user, **{field: value})
+            edit_user_menu(admin)
         elif choice == "3":
             username = input("Enter username to delete: ").strip()
             user = get_user_instance(username)
@@ -86,46 +83,112 @@ def admin_menu(admin):
         else:
             print("Invalid choice. Please try again.")
 
+def edit_user_menu(admin):
+    while True:
+        print("\n--- Edit User Information ---")
+        print("1. Edit MHWP Information")
+        print("2. Edit Patient Information")
+        print("3. Return to Admin Menu")
+        choice = input("Select an option: ").strip()
+        if choice == "1":
+            username = input("Enter MHWP username to edit: ").strip()
+            user = get_user_instance(username)
+            if isinstance(user, MHWP):
+                edit_mhwp_info(admin, user)
+            else:
+                print("Invalid MHWP username.")
+        elif choice == "2":
+            username = input("Enter Patient username to edit: ").strip()
+            user = get_user_instance(username)
+            if isinstance(user, Patient):
+                edit_patient_info(admin, user)
+            else:
+                print("Invalid Patient username.")
+        elif choice == "3":
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+def edit_mhwp_info(admin, mhwp):
+    while True:
+        print("\n--- Edit MHWP Information ---")
+        print("1. Change First Name")
+        print("2. Change Last Name")
+        print("3. Change Email")
+        print("4. Return to Edit User Menu")
+        choice = input("Select an option: ").strip()
+        if choice == "1":
+            new_first_name = input("Enter new first name: ").strip()
+            admin.edit_user_info(mhwp, first_name=new_first_name)
+        elif choice == "2":
+            new_last_name = input("Enter new last name: ").strip()
+            admin.edit_user_info(mhwp, last_name=new_last_name)
+        elif choice == "3":
+            new_email = input("Enter new email: ").strip()
+            admin.edit_user_info(mhwp, email=new_email)
+        elif choice == "4":
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+def edit_patient_info(admin, patient):
+    while True:
+        print("\n--- Edit Patient Information ---")
+        print("1. Change First Name")
+        print("2. Change Last Name")
+        print("3. Change Email")
+        print("4. Change Emergency Email")
+        print("5. Return to Edit User Menu")
+        choice = input("Select an option: ").strip()
+        if choice == "1":
+            new_first_name = input("Enter new first name: ").strip()
+            admin.edit_user_info(patient, first_name=new_first_name)
+        elif choice == "2":
+            new_last_name = input("Enter new last name: ").strip()
+            admin.edit_user_info(patient, last_name=new_last_name)
+        elif choice == "3":
+            new_email = input("Enter new email: ").strip()
+            admin.edit_user_info(patient, email=new_email)
+        elif choice == "4":
+            new_emergency_email = input("Enter new emergency email: ").strip()
+            admin.edit_user_info(patient, emergency_email=new_emergency_email)
+        elif choice == "5":
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
 def patient_menu(patient):
     while True:
         print("\n--- Patient Menu ---")
         print("1. Edit Personal Information")
         print("2. Add Mood of the Day")
-        print("3. Enter Journal Entry")
-        print("4. Access Meditation and Relaxation Resources")
-        print("5. Book an Appointment")
-        print("6. View Appointments")
-        print("7. Cancel an Appointment")
-        print("8. Export Appointments ")
+        print("3. Access Meditation and Relaxation Resources")
+        print("4. Book an Appointment")
+        print("5. View Appointments")
+        print("6. Cancel an Appointment")
+        print("7. Export Appointments ")
+        print("8. Enter Journal Entry")
         print("9. See All Journal Entries")
         print("10. Search Journal Entry by Keyword")
         print("11. Logout")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
-            field = input("Enter the field to update (e.g., email, emergency contact): ").strip()
-            value = input(f"Enter new value for {field}: ").strip()
-            setattr(patient, field, value)
-            print(f"{field} updated successfully.")
+            updatePersonalInfo(patient)
         elif choice == "2":
             patient.moodTracker()
         elif choice == "3":
-            patient.journal()
-        elif choice == "4":
             Patient.searchExercises()
-        elif choice == "5":
+        elif choice == "4":
             bookAppointment(patient)
-        elif choice == "6":
+        elif choice == "5":
             patient.displayAllAppointments()
+        elif choice == "6":
+            patient.cancelAppointment()
         elif choice == "7":
-            appointment_time = input("Enter the appointment time to cancel (YYYY-MM-DD HH:MM): ").strip()
-            if appointment_time in patient.patientCalendar:
-                appointment = patient.patientCalendar[appointment_time]
-                patient.cancelAppointment(appointment)
-            else:
-                print("No appointment found at the given time.")
-        elif choice == "8":
             patient.cli_export_appointments()
+        elif choice == "8":
+            patient.journal()
         elif choice == "9":
             patient.show_all_journal_entries()
         elif choice == "10":
@@ -136,6 +199,37 @@ def patient_menu(patient):
         else:
             print("Invalid choice. Please try again.")
 
+def updatePersonalInfo(patient):
+    print("\n--- Update Personal Information ---")
+    print("1. Update First Name")
+    print("2. Update Last Name")
+    print("3. Update Email")
+    print("4. Update Emergency Email")
+    print("5. Return to Patient Menu")
+
+    while True:
+        try:
+            choice = int(input("Select an option: ").strip())
+            if choice == 1:
+                patient.update_first_name()
+                break
+            elif choice == 2:
+                patient.update_last_name()
+                break
+            elif choice == 3:
+                patient.updateEmail()
+                break
+            elif choice == 4:
+                patient.updateEmergencyContact()
+                break
+            elif choice == 5:
+                print("Returning to Patient Menu...")
+                break
+            else:
+                print("Invalid choice. Please select a number between 1 and 5.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
+            
 def bookAppointment(patient):
     #for booking different types of appointments
     print("\n--- Appointment Booking ---")
@@ -146,24 +240,18 @@ def bookAppointment(patient):
     
     while True:
         try:
-            choice = int(input("Enter your choice (1-4): "))
+            choice = int(input("Select an option: "))
             if choice == 1:
                 print("\nBooking a Regular Appointment...")
-                appointment_time = patient.bookAppointment()
-                if appointment_time:
-                    print(f"Appointment successfully requested for {appointment_time}.")
+                patient.bookAppointment()
                 break
             elif choice == 2:
                 print("\nBooking the Soonest Available Appointment...")
-                appointment_time = patient.bookSoonestAppointment()
-                if appointment_time:
-                    print(f"Successfully booked the soonest appointment for {appointment_time}.")
+                patient.bookSoonestAppointment()
                 break
             elif choice == 3:
                 print("\nBooking an Emergency Appointment...")
-                appointment_time = patient.emergencyAppointment()
-                if appointment_time:
-                    print(f"Successfully booked an emergency appointment for {appointment_time}.")
+                patient.emergencyAppointment()
                 break
             elif choice == 4:
                 print("Returning to Patient Menu...")
@@ -187,8 +275,8 @@ def mhwp_menu(mhwp):
         choice = input("Select an option: ").strip()
 
         if choice == "1":
-            start_time = input("Enter start time (YYYY-MM-DD HH:MM): ").strip()
-            end_time = input("Enter end time (YYYY-MM-DD HH:MM): ").strip()
+            start_time = input("Enter start time (YYYY-MM-DD): ").strip()
+            end_time = input("Enter end time (YYYY-MM-DD): ").strip()
             mhwp.display_calendar(start_time, end_time)
         elif choice == "2":
             mhwp.cli_confirm_appointment()
@@ -197,10 +285,7 @@ def mhwp_menu(mhwp):
         elif choice == "4":
             mhwp.cli_handle_requested_appointments()
         elif choice == "5":
-            patient_email = input("Enter patient's email: ").strip()
-            notes = input("Enter notes: ").strip()
-            mood = input("Enter mood: ").strip()
-            mhwp.add_patient_info(patient_email, notes, mood)
+            managePatientRecords(mhwp)
         elif choice == "6":
             mhwp.display_patients_with_moods()
         elif choice == "7":
@@ -210,6 +295,28 @@ def mhwp_menu(mhwp):
             break
         else:
             print("Invalid choice. Please try again.")
+
+def managePatientRecords(mhwp):
+    while True:
+        print("\n--- Manage Patient Records ---")
+        print("1. Add Patient Note")
+        print("2. Add Patient Condition")
+        print("3. Return to MHWP Menu")
+        try:
+            choice = int(input("Select an option: ").strip())
+            if choice == 1:
+                mhwp.add_patient_note()
+                break
+            elif choice == 2:
+                mhwp.add_patient_condition()
+                break
+            elif choice == 3:
+                print("Returning to MHWP Menu...")
+                break
+            else:
+                print("Invalid choice. Please select a number between 1 and 3.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
 
 def get_user_instance(username):
     """
