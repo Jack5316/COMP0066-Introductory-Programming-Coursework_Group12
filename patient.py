@@ -570,7 +570,8 @@ class Patient(User):
 
     def show_all_journal_entries(self):
         if not self.journalEntries:
-            print("No journal entries found.")
+            print("\n--- No journal entries found ---")
+
         else:
             print("\n--- All Journal Entries ---")
             for jour_entry in self.journalEntries:
@@ -586,7 +587,7 @@ class Patient(User):
         # display the number of keyword occurences with each journal entry above
 
         if not self.journalEntries:
-            print("No journal entries found.")
+            print("\n--- No journal entries found ---")
             return 
         
         while True:
