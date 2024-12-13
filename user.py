@@ -71,6 +71,30 @@ class User:
         self.password = new_password
         User.user_dictionary[self.username] = str(new_password)
 
+    def update_first_name(self):
+        while True:
+            new_first_name = input("Please enter your new first name (or type 0 to exit): ").strip()
+            if new_first_name == '0':
+                print("Exiting without updating details.")
+                break
+            else:
+                self.first_name = str(new_first_name)
+                print("Your first name has been successfully updated.")
+                break
+
+    def update_last_name(self):
+        while True:
+            new_last_name = input("Please enter your new last name (or type 0 to exit): ").strip()
+            if new_last_name == '0':
+                print("Exiting without updating details.")
+                break
+            else:
+                self.last_name = str(new_last_name)
+                print("Your last name has been successfully updated.")
+                break
+
+    
+
 # practitioner = User("John", "Smith", "him@gmail.com", user_type="mhwp", username=" Bland ", password="881")
 
 # print(practitioner.username)

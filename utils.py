@@ -8,12 +8,20 @@ def export_appointments_to_ics(appointments, start_date, end_date, filename_pref
     If no appointments are found, notify the user instead of creating an empty file.
     """
     # Filter appointments based on status and date range
-    filtered_appointments = {
-        date_time: appointment for date_time, appointment in appointments.items()
-        if appointment.status == "confirmed" and start_date <= appointment.date_time.date() <= end_date
-    }
 
-    # If no appointments meet the criteria, notify and skip file creation
+    filtered_appointments = {}
+
+    for date_time, appointment in appointments.items():
+        # Ensure date_time is a datetime object
+        if isinstance(appointment.date_time, str):
+            appointment.date_time = datetime.strptime(appointment.date_time, "%Y-%m-%d %H:%M")
+
+        if (
+            appointment.status == "confirmed" and
+            start_date <= appointment.date_time.date() <= end_date
+        ):
+            filtered_appointments[date_time] = appointment
+    
     if not filtered_appointments:
         print(f"No confirmed appointments to export for {filename_prefix} between {start_date} and {end_date}.")
         return
