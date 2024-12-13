@@ -112,6 +112,9 @@ def edit_user_menu(admin):
 def edit_mhwp_info(admin, mhwp):
     while True:
         print("\n--- Edit MHWP Information ---")
+        print(f"Current First Name: {mhwp.first_name}")
+        print(f"Current Last Name: {mhwp.last_name}")
+        print(f"Current Email: {mhwp.email}")
         print("1. Change First Name")
         print("2. Change Last Name")
         print("3. Change Email")
@@ -134,6 +137,10 @@ def edit_mhwp_info(admin, mhwp):
 def edit_patient_info(admin, patient):
     while True:
         print("\n--- Edit Patient Information ---")
+        print(f"Current First Name: {patient.first_name}")
+        print(f"Current Last Name: {patient.last_name}")
+        print(f"Current Email: {patient.email}")
+        print(f"Current Emergency Email: {patient.emergencyEmail}")
         print("1. Change First Name")
         print("2. Change Last Name")
         print("3. Change Email")
@@ -201,6 +208,10 @@ def patient_menu(patient):
 
 def updatePersonalInfo(patient):
     print("\n--- Update Personal Information ---")
+    print(f"Current First Name: {patient.first_name}")
+    print(f"Current Last Name: {patient.last_name}")
+    print(f"Current Email: {patient.email}")
+    print(f"Current Emergency Email: {patient.emergencyEmail}")
     print("1. Update First Name")
     print("2. Update Last Name")
     print("3. Update Email")
