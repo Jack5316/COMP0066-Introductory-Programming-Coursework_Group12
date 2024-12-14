@@ -148,12 +148,15 @@ class MHWP(User):
     # DISPLAY CALENDAR
 
     def display_calendar(self, start_date, end_date):
-        """Display appointments scheduled within a given date range, including unavailable periods."""
-        start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-        end_datetime = datetime.strptime(end_date, "%Y-%m-%d")        
-        # Convert dates to datetime with range covering the whole days
-    #    start_datetime = datetime.combine(start_date, datetime.min.time())
-     #   end_datetime = datetime.combine(end_date, datetime.max.time())
+        """ Display appointments scheduled within a given date range, including unavailable periods."""
+                
+        try:
+            # Attempt to parse the input dates
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+        except ValueError:
+            print("Error: Invalid date format. Please enter dates in the format YYYY-MM-DD.")
+            return
 
         # Validate date range
         if start_datetime >= end_datetime:
@@ -183,7 +186,8 @@ class MHWP(User):
                 status = appointment.status  # Access the appointment status
                 print(f"- {time}: {patient.first_name} {patient.last_name} ({status})")
         else:
-            print(f"No appointments scheduled between in given time range.")
+            print(f"No appointments scheduled between {start_date} and {end_date}.")
+
 
     # CONFIRM APPOINTMENT
 
