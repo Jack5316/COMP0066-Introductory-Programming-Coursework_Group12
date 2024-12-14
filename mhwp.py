@@ -149,8 +149,7 @@ class MHWP(User):
 
     def display_calendar(self, start_date, end_date):
         """ Display appointments scheduled within a given date range, including unavailable periods."""
-        from datetime import datetime
-        
+                
         try:
             # Attempt to parse the input dates
             start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
