@@ -19,6 +19,8 @@ class Appointment:
         self.mhwp_username = mhwp.username
 
         patient.patientCalendar[self.date_time] = self
+        if self.date_time not in mhwp.appointment_calendar:
+            mhwp.appointment_calendar[self.date_time] = self
         Appointment.all_appointment_objects.append(self)
         Appointment.save_all_appointments()
 
