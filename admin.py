@@ -88,11 +88,14 @@ class Admin(User):
         print("\nSummary Report")
         print("--------------")
         print(f"{'Username':<15} {'User Type':<10} {'Assigned MHWP':<15} {'Confirmed Bookings':<10}")
-        for self.username, user in User.user_dictionary.items():
+        for user in User.all_user_objects.values():
             if isinstance(user, Patient):
-                print(f"{user.username:<15} {'Patient':<10} {user.assigned_mhwp:<15} {len(user.appointments):<10}")
+                assigned_mhwp = user.mhwpAsigned.username if user.mhwpAsigned else "None"
+                confirmed_bookings = sum(1 for appt in user.patientCalendar.values() if appt.status == "confirmed")
+                print(f"{user.username:<15} {'Patient':<10} {assigned_mhwp:<15} {confirmed_bookings:<10}")
             elif isinstance(user, MHWP):
-                print(f"{user.username:<15} {'MHWP':<10} {'N/A':<15} {len(user.appointments):<10}")
+                confirmed_bookings = sum(1 for appt in user.appointment_calendar.values() if appt.status == "confirmed")
+                print(f"{user.username:<15} {'MHWP':<10} {'N/A':<15} {confirmed_bookings:<10}")
         print("--------------")
 
 
