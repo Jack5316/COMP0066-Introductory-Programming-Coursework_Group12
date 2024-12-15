@@ -48,9 +48,15 @@ class User:
     @classmethod
     def login(cls, username, password):
         login_clean = str(username).strip().lower()
-        if login_clean in cls.user_dictionary and cls.user_dictionary[login_clean] == password:
-            cls.user_session = login_clean
-            print(f"Login successful: welcome {login_clean}.")
+        if login_clean in cls.user_dictionary:
+            user_obj = cls.all_user_objects.get(login_clean)
+            if user_obj and user_obj.blocked:
+                print(f"Login failed: User {login_clean} is disabled.")
+            elif cls.user_dictionary[login_clean] == password:
+                cls.user_session = login_clean
+                print(f"Login successful: welcome {login_clean}.")
+            else:
+                print("Invalid login details!")
         else:
             print("Invalid login details!")
 
