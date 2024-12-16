@@ -18,6 +18,7 @@ def main_menu():
         if choice == "1":
             login()
         elif choice == "2":
+            Appointment.save_all_appointments()
             print("Goodbye!")
             break
         else:
