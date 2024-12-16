@@ -58,6 +58,8 @@ class Appointment:
             self.patientInstance.patientCalendar.pop(self.date_time)
         if self.date_time in self.mhwpInstance.appointment_calendar:
             self.mhwpInstance.appointment_calendar.pop(self.date_time)
+        if self in Appointment.all_appointment_objects:
+            Appointment.all_appointment_objects.remove(self)
         print("Appointment has been cancelled.")
         # email to patient
         subject = "Appointment Cancelled"
@@ -109,8 +111,9 @@ class Appointment:
                 try:
                     patient = all_users_dict[appointment_obj.patient_username]
                     mhwp = all_users_dict[appointment_obj.mhwp_username]
+                    
                 except KeyError:
-                    print(f"User data missing for {appointment_obj.date_time}. Skipping...")
+                    print(f"User data missing for Appointment on: {appointment_obj.date_time}. Appointment will be skipped")
                     continue
                 if patient and mhwp:
                     appointment_obj.patientInstance = patient
