@@ -15,8 +15,17 @@ class MHWP(User):
         self.unavailable_periods = []  # List to store unavailable periods
         self.working_hours = {"start": "09:00", "end": "17:00"}  # MHWP working hours
 
+    # Check in case a user is disabled
+    def check_access(func):
+        def wrapper(self, *args, **kwargs):
+            if self.blocked:
+                print(f"Access Denied: User {self.username} is disabled.")
+                return None
+            return func(self, *args, **kwargs)
+        return wrapper
+    
     # SET UNAVAILABLE TIME PERIOD E.G. HOLIDAYS
-
+    @check_access
     def set_unavailable_period(self, start_date, end_date):
         """Set a period during which the MHWP is unavailable."""
         # Validate the date range
@@ -37,7 +46,8 @@ class MHWP(User):
 
         self.unavailable_periods.append((start_datetime, end_datetime))
         print(f"Unavailable period set from {start_date} to {end_date}.")
-
+  
+    @check_access
     def view_unavailable_periods(self):
         """View the existing unavailable periods."""
         if not self.unavailable_periods:
@@ -64,6 +74,7 @@ class MHWP(User):
             except ValueError:
                 print("Invalid input. Please enter a number.")
 
+    @check_access
     def manage_selected_period(self, period_index, period):
         """Manage a selected unavailable period."""
         while True:
@@ -93,6 +104,7 @@ class MHWP(User):
                 print("Invalid choice. Please enter a number between 1 and 3.")
 
 
+    @check_access
     def edit_unavailable_period(self, period_index):
         """Edit a specific unavailable period."""
         try:
@@ -112,12 +124,13 @@ class MHWP(User):
         except ValueError:
             print("Invalid date format. Please enter the dates in YYYY-MM-DD format.")
 
+    @check_access
     def cancel_unavailable_period(self, period_index):
         """Cancel a specific unavailable period."""
         removed_period = self.unavailable_periods.pop(period_index)
         print(f"Unavailable period from {removed_period[0].date()} to {removed_period[1].date()} canceled.")
 
-
+    @check_access
     def cli_set_unavailable_period(self):
         """Handle the CLI for managing unavailable periods."""
         while True:
@@ -146,7 +159,7 @@ class MHWP(User):
 
 
     # DISPLAY CALENDAR
-
+    @check_access
     def display_calendar(self, start_date, end_date):
         """ Display appointments scheduled within a given date range, including unavailable periods."""
                 
@@ -190,7 +203,7 @@ class MHWP(User):
 
 
     # CONFIRM APPOINTMENT
-
+    @check_access
     def confirm_appointment(self, appointment):
         """Confirm an appointment by updating its status."""
         if appointment.status == "confirmed":
@@ -201,7 +214,7 @@ class MHWP(User):
             print(
                 f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} has been confirmed.")
 
-
+    @check_access
     def cli_confirm_appointment(self):
         """Handle the CLI for confirming an appointment."""
         # Get the timeframe to display relevant appointments
@@ -254,6 +267,7 @@ class MHWP(User):
             print("No appointments available to confirm.")
 
     # CANCEL APPOINTMENT
+    @check_access
     def cancel_appointment(self, appointment):
         """Cancel an appointment by updating its status."""
         if appointment.status == "cancelled":
@@ -265,6 +279,7 @@ class MHWP(User):
                 f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} has been cancelled.")
 
 
+    @check_access
     def cli_cancel_appointment(self):
         """Handles the CLI for the MHWP to cancel appointments."""
 
@@ -318,6 +333,7 @@ class MHWP(User):
             print("No appointments available to cancel.")
 
     # VIEW REQUESTS
+    @check_access
     def view_requests(self):
         """Display enumerated appointments with the 'requested' status."""
         # Filter appointments with 'requested' status
@@ -328,7 +344,7 @@ class MHWP(User):
         ]
         return requested_appointments
 
-
+    @check_access
     def cli_handle_requested_appointments(self):
         """Handle the CLI for managing requested appointments."""
         while True:
@@ -373,6 +389,7 @@ class MHWP(User):
                 print("Please enter a valid number.")
 
     # EXPORT APPOINTMENTS TO CALENDAR
+    @check_access
     def export_appointments_to_ics(self, start_date, end_date):
         """
         Export the MHWP's confirmed appointments within the specified date range to an .ics file.
@@ -387,6 +404,7 @@ class MHWP(User):
             calendar_with_datetime[date_time] = appointment
         export_appointments_to_ics(self.appointment_calendar, start_date, end_date, filename_prefix, is_mhwp=True)
 
+    @check_access
     def cli_export_appointments(self):
         """
         CLI for exporting MHWP's appointments to an ICS file.
@@ -407,13 +425,13 @@ class MHWP(User):
             print("Invalid date format. Please use YYYY-MM-DD.")
 
 
-
+    @check_access
     def display_conditions(self, predefined_conditions):
         print("Please select a condition from the following list:")
         for i, condition in enumerate(predefined_conditions, start=1):
             print(f"{i} - {condition}")
 
-
+    @check_access
     def select_patient(self):
         """Function allows the MHWP to select a patient from all their patients  
 
@@ -448,7 +466,7 @@ class MHWP(User):
             except ValueError:
                 print("Please enter a valid number: ")
 
-        
+    @check_access
     def add_patient_note(self):
         current_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
@@ -463,6 +481,7 @@ class MHWP(User):
         patient_object.notes.append(new_note)
 
 
+    @check_access
     def add_patient_condition(self):
         patient_object = self.select_patient()
         if patient_object == False:
@@ -491,6 +510,7 @@ class MHWP(User):
         return 
 
 
+    @check_access
     def display_patients_with_moods(self):
         moods = {
             "Very Happy": "\033[32m",  # dark green
