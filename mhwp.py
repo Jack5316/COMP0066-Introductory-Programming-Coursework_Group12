@@ -14,18 +14,8 @@ class MHWP(User):
         self.appointment_calendar = {}  # Dictionary to store appointments by date/time
         self.unavailable_periods = []  # List to store unavailable periods
         self.working_hours = {"start": "09:00", "end": "17:00"}  # MHWP working hours
-
-    # Check in case a user is disabled
-    def check_access(func):
-        def wrapper(self, *args, **kwargs):
-            if self.blocked:
-                print(f"Access Denied: User {self.username} is disabled.")
-                return None
-            return func(self, *args, **kwargs)
-        return wrapper
     
-    # SET UNAVAILABLE TIME PERIOD E.G. HOLIDAYS
-    @check_access
+    # SET UNAVAILABLE TIME PERIOD E.G. HOLIDAYS    
     def set_unavailable_period(self, start_date, end_date):
         """Set a period during which the MHWP is unavailable."""
         # Validate the date range
@@ -46,8 +36,7 @@ class MHWP(User):
 
         self.unavailable_periods.append((start_datetime, end_datetime))
         print(f"Unavailable period set from {start_date} to {end_date}.")
-  
-    @check_access
+      
     def view_unavailable_periods(self):
         """View the existing unavailable periods."""
         if not self.unavailable_periods:
@@ -73,8 +62,7 @@ class MHWP(User):
                     print("Invalid choice. Please select a valid period number or 0 to go back.")
             except ValueError:
                 print("Invalid input. Please enter a number.")
-
-    @check_access
+    
     def manage_selected_period(self, period_index, period):
         """Manage a selected unavailable period."""
         while True:
@@ -102,9 +90,7 @@ class MHWP(User):
                 return  # Go back to the period list
             else:
                 print("Invalid choice. Please enter a number between 1 and 3.")
-
-
-    @check_access
+    
     def edit_unavailable_period(self, period_index):
         """Edit a specific unavailable period."""
         try:
@@ -123,14 +109,12 @@ class MHWP(User):
             print(f"Unavailable period updated to {start_date} to {end_date}.")
         except ValueError:
             print("Invalid date format. Please enter the dates in YYYY-MM-DD format.")
-
-    @check_access
+    
     def cancel_unavailable_period(self, period_index):
         """Cancel a specific unavailable period."""
         removed_period = self.unavailable_periods.pop(period_index)
         print(f"Unavailable period from {removed_period[0].date()} to {removed_period[1].date()} canceled.")
-
-    @check_access
+    
     def cli_set_unavailable_period(self):
         """Handle the CLI for managing unavailable periods."""
         while True:
@@ -158,8 +142,8 @@ class MHWP(User):
                 print("Invalid choice. Please enter a number between 1, 2, and 5.")
 
 
-    # DISPLAY CALENDAR
-    @check_access
+    # DISPLAY CALENDAR    
+    '''
     def display_calendar(self, start_date, end_date):
         """ Display appointments scheduled within a given date range, including unavailable periods."""
                 
@@ -200,10 +184,50 @@ class MHWP(User):
                 print(f"- {time}: {patient.first_name} {patient.last_name} ({status})")
         else:
             print(f"No appointments scheduled between {start_date} and {end_date}.")
+    '''
+
+    def display_calendar(self, start_date, end_date):
+        """Display appointments scheduled within a given date range, including unavailable periods."""                
+        try:
+            # Attempt to parse the input dates
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+        except ValueError:
+            print("Error: Invalid date format. Please enter dates in the format YYYY-MM-DD.")
+            return
+
+        # Validate date range
+        if start_datetime >= end_datetime:
+            print("Error: Start date must be earlier than end date.")
+            return
+
+        # Display unavailable periods
+        print("\033[1mUnavailable Periods:\033[0m")
+        if hasattr(self, 'unavailable_periods') and self.unavailable_periods:
+            for start, end in self.unavailable_periods:
+                if start <= end_datetime and end >= start_datetime:  # Overlaps with the requested range
+                    print(f"- {start} to {end}")
+        else:
+            print("No unavailable periods set.")
+
+        # Display appointments (both requested and confirmed)
+        appointments_in_date_range = [
+            appointment
+            for time, appointment in self.appointment_calendar.items()
+            if start_datetime <= time <= end_datetime
+        ]
+
+        print("\033[1mScheduled Appointments:\033[0m")
+        if appointments_in_date_range:
+            for appointment in sorted(appointments_in_date_range, key=lambda x: x.date_time):
+                patient = appointment.patientInstance  # Access the Patient instance
+                status = appointment.status  # Access the appointment status
+                print(f"- {appointment.date_time}: {patient.first_name} {patient.last_name} ({status})")
+        else:
+            print(f"No appointments scheduled between {start_date} and {end_date}.")
 
 
-    # CONFIRM APPOINTMENT
-    @check_access
+    # CONFIRM APPOINTMENT    
     def confirm_appointment(self, appointment):
         """Confirm an appointment by updating its status."""
         if appointment.status == "confirmed":
@@ -213,8 +237,7 @@ class MHWP(User):
             appointment.confirm()  # Use the confirm method from the Appointment class
             print(
                 f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} has been confirmed.")
-
-    @check_access
+    
     def cli_confirm_appointment(self):
         """Handle the CLI for confirming an appointment."""
         # Get the timeframe to display relevant appointments
@@ -266,8 +289,7 @@ class MHWP(User):
         else:
             print("No appointments available to confirm.")
 
-    # CANCEL APPOINTMENT
-    @check_access
+    # CANCEL APPOINTMENT    
     def cancel_appointment(self, appointment):
         """Cancel an appointment by updating its status."""
         if appointment.status == "cancelled":
@@ -277,9 +299,7 @@ class MHWP(User):
             appointment.cancel()  # Use the cancel method from the Appointment class
             print(
                 f"Appointment with {appointment.patientInstance.first_name} {appointment.patientInstance.last_name} has been cancelled.")
-
-
-    @check_access
+    
     def cli_cancel_appointment(self):
         """Handles the CLI for the MHWP to cancel appointments."""
 
@@ -332,8 +352,7 @@ class MHWP(User):
         else:
             print("No appointments available to cancel.")
 
-    # VIEW REQUESTS
-    @check_access
+    # VIEW REQUESTS    
     def view_requests(self):
         """Display enumerated appointments with the 'requested' status."""
         # Filter appointments with 'requested' status
@@ -343,8 +362,7 @@ class MHWP(User):
             if appointment.status == "requested"
         ]
         return requested_appointments
-
-    @check_access
+    
     def cli_handle_requested_appointments(self):
         """Handle the CLI for managing requested appointments."""
         while True:
@@ -388,8 +406,7 @@ class MHWP(User):
             except ValueError:
                 print("Please enter a valid number.")
 
-    # EXPORT APPOINTMENTS TO CALENDAR
-    @check_access
+    # EXPORT APPOINTMENTS TO CALENDAR    
     def export_appointments_to_ics(self, start_date, end_date):
         """
         Export the MHWP's confirmed appointments within the specified date range to an .ics file.
@@ -403,8 +420,7 @@ class MHWP(User):
                 appointment.date_time = datetime.strptime(appointment.date_time, "%Y-%m-%d %H:%M")
             calendar_with_datetime[date_time] = appointment
         export_appointments_to_ics(self.appointment_calendar, start_date, end_date, filename_prefix, is_mhwp=True)
-
-    @check_access
+    
     def cli_export_appointments(self):
         """
         CLI for exporting MHWP's appointments to an ICS file.
@@ -423,15 +439,12 @@ class MHWP(User):
 
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
-
-
-    @check_access
+    
     def display_conditions(self, predefined_conditions):
         print("Please select a condition from the following list:")
         for i, condition in enumerate(predefined_conditions, start=1):
             print(f"{i} - {condition}")
-
-    @check_access
+    
     def select_patient(self):
         """Function allows the MHWP to select a patient from all their patients  
 
@@ -465,8 +478,7 @@ class MHWP(User):
 
             except ValueError:
                 print("Please enter a valid number: ")
-
-    @check_access
+    
     def add_patient_note(self):
         current_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
@@ -479,9 +491,7 @@ class MHWP(User):
         new_note = [current_time,comments,self.first_name + " " + self.last_name]
 
         patient_object.notes.append(new_note)
-
-
-    @check_access
+    
     def add_patient_condition(self):
         patient_object = self.select_patient()
         if patient_object == False:
@@ -508,9 +518,7 @@ class MHWP(User):
         patient_object.conditions.append(condition)
         print(f"Patient named {patient_object.first_name} {patient_object.last_name} has had the following condition added: {condition}")
         return 
-
-
-    @check_access
+        
     def display_patients_with_moods(self):
         moods = {
             "Very Happy": "\033[32m",  # dark green
@@ -525,22 +533,62 @@ class MHWP(User):
         print("\n--- Patient Mood Tracker ---")
         print("-" * 30)
 
+        # Prompt for start and end date
+        while True:
+            try:
+                start_date_str = input("Enter start date (YYYY-MM-DD): ").strip()
+                end_date_str = input("Enter end date (YYYY-MM-DD): ").strip()
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+                end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+                if start_date > end_date:
+                    print("Start date cannot be after end date. Please try again.")
+                    continue
+                break
+            except ValueError:
+                print("Invalid date format. Please enter dates in YYYY-MM-DD format.")
+                continue
+
         if not self.all_patients:
             print("No patients found.")
             return
 
         for patient in self.all_patients:
-            print(f"Patient: {patient.first_name} {patient.last_name}")
+            print(f"\nPatient: {patient.first_name} {patient.last_name}")
+            print(f"Default Email: {patient.email}")
+            print(f"Emergency Email: {patient.emergencyEmail}")
+            print("-" * 20)
+
+            # Filter and display moods
             if patient.mood:
-                # Get the most recent mood entry
-                latest_mood = patient.mood[-1]  # Format is [time, description, comments]
-                mood_description = latest_mood[1]  # Get the mood description
-                mood_color = moods.get(mood_description, reset_color)
-                
-                print(f"Latest Mood ({latest_mood[0]}):")
-                print(f"{mood_color}{mood_description}{reset_color}")
-                print(f"Comments: {latest_mood[2]}")
+                filtered_moods = [
+                    mood for mood in patient.mood
+                    if start_date <= datetime.strptime(mood[0], "%Y-%m-%d %H:%M:%S") <= end_date
+                ]
+                if filtered_moods:
+                    print("Mood Entries:")
+                    for entry in filtered_moods:
+                        time, mood_description, comments = entry
+                        mood_color = moods.get(mood_description, reset_color)
+                        print(f"{time}: {mood_color}{mood_description}{reset_color} - {comments}")
+                else:
+                    print("No mood entries within the specified date range.")
             else:
-                print("No mood data recorded")
+                print("No mood data recorded.")
+
+            # Display notes
+            if patient.notes:
+                print("\nPatient Notes:")
+                for note in patient.notes:
+                    print(f"{note[0]} - {note[2]}: {note[1]}")
+            else:
+                print("No notes recorded.")
+
+            # Display conditions
+            if patient.conditions:
+                print("\nPatient Conditions:")
+                print(", ".join(patient.conditions))
+            else:
+                print("No conditions recorded.")
+
             print("-" * 30)
 
