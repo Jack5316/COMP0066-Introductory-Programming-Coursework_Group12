@@ -5,10 +5,43 @@ from patient import Patient
 from mhwp import MHWP
 from appointment import Appointment
 
+def initialize_users():
+    User.user_dictionary = {}
+    User.all_user_objects = {}
 
+    mhwp1 = MHWP("John", "Smith", "him@gmail.com", username="mhwp1", password="")
+    mhwp2 = MHWP("Jane", "Smith", "her@gmail.com", username="mhwp2", password="")
+    mhwp3 = MHWP("Joanna", "Smith", "heragain@gmail.com", username="mhwp3", password="")
+    patient1 = Patient("Patient", "One", "diseased@gmail.com", user_type="patient", username="patient1", password="",
+                  mhwpAsigned=mhwp1, emergencyEmail="disease@outlook.com", colourCode=None)
+    patient2 = Patient("Patient", "Two", "debilitated@gmail.com", user_type="patient", username="patient2", password="",
+                  mhwpAsigned=mhwp2, emergencyEmail="debilitation@outlook.com", colourCode=None)
+    patient3 = Patient("Patient", "Three", "wasted@gmail.com", user_type="patient", username="patient3", password="",
+                  mhwpAsigned=mhwp3, emergencyEmail="wasted@outlook.com", colourCode=None)
+    admin = Admin("Admin", "Adamson", "adminadamson@gmail.com",user_type= "admin", username="admin", password="")
+    
+    User.all_user_objects[admin.username] = admin
+    User.all_user_objects[patient1.username] = patient1
+    User.all_user_objects[patient2.username] = patient2
+    User.all_user_objects[patient3.username] = patient3
+    User.all_user_objects[mhwp1.username] = mhwp1
+    User.all_user_objects[mhwp2.username] = mhwp2
+
+    User.user_dictionary[admin.username] = admin.password
+    User.user_dictionary[patient1.username] = patient1.password
+    User.user_dictionary[patient2.username] = patient2.password
+    User.user_dictionary[patient2.username] = patient3.password
+    User.user_dictionary[mhwp1.username] = mhwp1.password
+    User.user_dictionary[mhwp2.username] = mhwp2.password
 
 def main_menu():
+    User.load_users()
     Appointment.load_appointments()
+
+    if not User.all_user_objects:
+        initialize_users()
+        User.save_users()
+
     while True:
         print("\n--- Breeze Mental Health Management System ---")
         print("1. Login")
@@ -58,6 +91,7 @@ def admin_menu(admin):
             mhwp = get_user_instance(mhwp_username)
             if patient and mhwp:
                 admin.allocate_patient_to_mhwp(patient, mhwp)
+                User.save_users()
             else:
                 print("Invalid patient or MHWP username.")
         elif choice == "2":
@@ -67,6 +101,7 @@ def admin_menu(admin):
             user = get_user_instance(username)
             if user:
                 admin.delete_user(user)
+                User.save_users()
             else:
                 print("Invalid username.")
         elif choice == "4":
@@ -74,6 +109,7 @@ def admin_menu(admin):
             user = get_user_instance(username)
             if user:
                 admin.disable_user(user)
+                User.save_users()
             else:
                 print("Invalid username.")
         elif choice == "5":
@@ -96,6 +132,7 @@ def edit_user_menu(admin):
             user = get_user_instance(username)
             if isinstance(user, MHWP):
                 edit_mhwp_info(admin, user)
+                User.save_users()
             else:
                 print("Invalid MHWP username.")
         elif choice == "2":
@@ -103,6 +140,7 @@ def edit_user_menu(admin):
             user = get_user_instance(username)
             if isinstance(user, Patient):
                 edit_patient_info(admin, user)
+                User.save_users()
             else:
                 print("Invalid Patient username.")
         elif choice == "3":
@@ -167,45 +205,56 @@ def edit_patient_info(admin, patient):
 
 def patient_menu(patient):
     while True:
-        print("\n--- Patient Menu ---")
-        print("1. Edit Personal Information")
-        print("2. Add Mood of the Day")
-        print("3. Access Meditation and Relaxation Resources")
-        print("4. Book an Appointment")
-        print("5. View Appointments")
-        print("6. Cancel an Appointment")
-        print("7. Export Appointments ")
-        print("8. Enter Journal Entry")
-        print("9. See All Journal Entries")
-        print("10. Search Journal Entry by Keyword")
-        print("11. Logout")
-        choice = input("Select an option: ").strip()
-
-        if choice == "1":
-            updatePersonalInfo(patient)
-        elif choice == "2":
-            patient.moodTracker()
-        elif choice == "3":
-            Patient.searchExercises()
-        elif choice == "4":
-            bookAppointment(patient)
-        elif choice == "5":
-            patient.displayAllAppointments()
-        elif choice == "6":
-            patient.cancelAppointment()
-        elif choice == "7":
-            patient.cli_export_appointments()
-        elif choice == "8":
-            patient.journal()
-        elif choice == "9":
-            patient.show_all_journal_entries()
-        elif choice == "10":
-            patient.search_journal_entries()
-        elif choice == "11":
-            User.logout()
-            break
+        if patient.blocked:
+            print("\n--- Patient Menu ---")
+            print("User blocked! Only logout is allowed.")
+            print("1. Logout")
+            choice = input("Select an option: ").strip()
+            if choice == "1":
+                User.logout()
+                break
         else:
-            print("Invalid choice. Please try again.")
+            print("\n--- Patient Menu ---")
+            print("1. Edit Personal Information")
+            print("2. Add Mood of the Day")
+            print("3. Access Meditation and Relaxation Resources")
+            print("4. Book an Appointment")
+            print("5. View Appointments")
+            print("6. Cancel an Appointment")
+            print("7. Export Appointments ")
+            print("8. Enter Journal Entry")
+            print("9. See All Journal Entries")
+            print("10. Search Journal Entry by Keyword")
+            print("11. Logout")
+            choice = input("Select an option: ").strip()
+
+            if choice == "1":
+                updatePersonalInfo(patient)
+                User.save_users()
+            elif choice == "2":
+                patient.moodTracker()
+                User.save_users()
+            elif choice == "3":
+                Patient.searchExercises()
+            elif choice == "4":
+                bookAppointment(patient)
+            elif choice == "5":
+                patient.displayAllAppointments()
+            elif choice == "6":
+                patient.cancelAppointment()
+            elif choice == "7":
+                patient.cli_export_appointments()
+            elif choice == "8":
+                patient.journal()
+            elif choice == "9":
+                patient.show_all_journal_entries()
+            elif choice == "10":
+                patient.search_journal_entries()
+            elif choice == "11":
+                User.logout()
+                break
+            else:
+                print("Invalid choice. Please try again.")
 
 def updatePersonalInfo(patient):
     print("\n--- Update Personal Information ---")
@@ -275,38 +324,48 @@ def bookAppointment(patient):
 
 def mhwp_menu(mhwp):
     while True:
-        print("\n--- MHWP Menu ---")
-        print("1. View Calendar")
-        print("2. Confirm Appointment")
-        print("3. Cancel Appointment")
-        print("4. Handle Requests")
-        print("5. Add Patient Notes/Conditions")
-        print("6. View Patient Mood Tracker Summary")
-        print("7. Export Appointments")
-        print("8. Logout")
-        choice = input("Select an option: ").strip()
-
-        if choice == "1":
-            start_time = input("Enter start time (YYYY-MM-DD): ").strip()
-            end_time = input("Enter end time (YYYY-MM-DD): ").strip()
-            mhwp.display_calendar(start_time, end_time)
-        elif choice == "2":
-            mhwp.cli_confirm_appointment()
-        elif choice == "3":
-            mhwp.cli_cancel_appointment()
-        elif choice == "4":
-            mhwp.cli_handle_requested_appointments()
-        elif choice == "5":
-            managePatientRecords(mhwp)
-        elif choice == "6":
-            mhwp.display_patients_with_moods()
-        elif choice == "7":
-            mhwp.cli_export_appointments()
-        elif choice == "8":
-            User.logout()
-            break
+        if mhwp.blocked:
+            print("\n--- MHWP Menu ---")
+            print("User blocked! Only logout is allowed.")
+            print("1. Logout")
+            choice = input("Select an option: ").strip()
+            if choice == "1":
+                User.logout()
+                break
         else:
-            print("Invalid choice. Please try again.")
+            print("\n--- MHWP Menu ---")
+            print("1. View Calendar")
+            print("2. Confirm Appointment")
+            print("3. Cancel Appointment")
+            print("4. Handle Requests")
+            print("5. Add Patient Notes/Conditions")
+            print("6. View Patient Mood Tracker Summary")
+            print("7. Export Appointments")
+            print("8. Logout")
+            choice = input("Select an option: ").strip()
+
+            if choice == "1":
+                start_time = input("Enter start time (YYYY-MM-DD): ").strip()
+                end_time = input("Enter end time (YYYY-MM-DD): ").strip()
+                mhwp.display_calendar(start_time, end_time)
+            elif choice == "2":
+                mhwp.cli_confirm_appointment()
+            elif choice == "3":
+                mhwp.cli_cancel_appointment()
+            elif choice == "4":
+                mhwp.cli_handle_requested_appointments()
+            elif choice == "5":
+                managePatientRecords(mhwp)
+                User.save_users()
+            elif choice == "6":
+                mhwp.display_patients_with_moods()
+            elif choice == "7":
+                mhwp.cli_export_appointments()
+            elif choice == "8":
+                User.logout()
+                break
+            else:
+                print("Invalid choice. Please try again.")
 
 def managePatientRecords(mhwp):
     while True:
@@ -331,13 +390,8 @@ def managePatientRecords(mhwp):
             print("Invalid input. Please enter a valid number.")
 
 def get_user_instance(username):
-    """
-    Fetch the user instance by username. Assume users are stored in a dictionary.
-    """
-    for user in [admin, patient, practioner]:  # Replace with your actual user storage mechanism
-        if user.username == username:
-            return user
-    return None
+    username_clean = str(username).strip().lower()
+    return User.all_user_objects.get(username_clean)
 
 # # Example Users
 # admin = Admin("Alice", "Johnson", "admin1", "alice@example.com")
@@ -346,10 +400,10 @@ def get_user_instance(username):
 # patient2 = Patient("Jane", "Doe", "janedoe@example.com", "patient", "patient2", "", mhwp1, "emergency@example.com", [])
 
 
-practioner = MHWP("John", "Smith", "him@gmail.com", username="mhwp1", password="")
-patient = Patient("Patient", "Zeri", "diseased@gmail.com", user_type="patient", username="patient1", password="",
-                  mhwpAsigned=practioner, emergencyEmail="disease@outlook.com", colourCode=None)
-admin = Admin("Alex", "Chris", "alex@gmail.com",user_type= "admin", username="alex", password="881")
+#practioner = MHWP("John", "Smith", "him@gmail.com", username="mhwp1", password="")
+#patient = Patient("Patient", "Zeri", "diseased@gmail.com", user_type="patient", username="patient1", password="",
+#                  mhwpAsigned=practioner, emergencyEmail="disease@outlook.com", colourCode=None)
+#admin = Admin("Alex", "Chris", "alex@gmail.com",user_type= "admin", username="alex", password="881")
 
 
 if __name__ == "__main__":

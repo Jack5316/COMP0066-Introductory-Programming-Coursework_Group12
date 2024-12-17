@@ -1,10 +1,28 @@
 import re
+import pickle
 
 class User:
     user_dictionary = {}
-
     all_user_objects = {}
     user_session = None
+
+    @staticmethod
+    def save_users(file_name="users.pkl"):
+        try:
+            with open(file_name, "wb") as file:
+                pickle.dump((User.user_dictionary, User.all_user_objects), file)
+        except Exception as e:
+            print(f"Error saving user data: {e}")
+
+    @staticmethod
+    def load_users(file_name="users.pkl"):
+        try:
+            with open(file_name, "rb") as file:
+                User.user_dictionary, User.all_user_objects = pickle.load(file)
+        except FileNotFoundError:
+            print(f"No user data file found ({file_name}). Starting fresh.")
+        except Exception as e:
+            print(f"Error loading user data: {e}")
 
     def __init__(self, first_name, last_name, email, user_type, username, password):
         username_clean = str(username).strip().lower()
@@ -48,15 +66,9 @@ class User:
     @classmethod
     def login(cls, username, password):
         login_clean = str(username).strip().lower()
-        if login_clean in cls.user_dictionary:
-            user_obj = cls.all_user_objects.get(login_clean)
-            if user_obj and user_obj.blocked:
-                print(f"Login failed: User {login_clean} is disabled.")
-            elif cls.user_dictionary[login_clean] == password:
-                cls.user_session = login_clean
-                print(f"Login successful: welcome {login_clean}.")
-            else:
-                print("Invalid login details!")
+        if login_clean in cls.user_dictionary and cls.user_dictionary[login_clean] == password:
+            cls.user_session = login_clean
+            print(f"Login successful: welcome {login_clean}.")
         else:
             print("Invalid login details!")
 

@@ -18,16 +18,6 @@ class Patient(User):
         self.colourCode = colourCode
         mhwpAsigned.all_patients.append(self)
 
-    # Check in case a user is disabled
-    def check_access(func):
-        def wrapper(self, *args, **kwargs):
-            if self.blocked:
-                print(f"Access Denied: User {self.username} is disabled.")
-                return None
-            return func(self, *args, **kwargs)
-        return wrapper
-
-    @check_access
     def moodTracker(self):
         moods = {"Dark Green": "Very Happy", 
                  "Light Green": "Happy", 
@@ -78,7 +68,6 @@ class Patient(User):
         print("Mood:", moodEntry[1])
         print("Comments:", moodEntry[2])
 
-    @check_access
     def journal(self):
         journalText=input("Please input your journal text: ")
         timeStamp = strftime("%Y-%m-%d %H:%M:%S", gmtime())
@@ -89,7 +78,6 @@ class Patient(User):
         for key, value in journalEntry.items():
             print(f"{key}: {value}")
 
-    @check_access
     def updateEmail(self):
         while True:
             try:
@@ -103,7 +91,6 @@ class Patient(User):
             except ValueError as e:
                 print(f"Error: {e}")
 
-    @check_access
     def updateEmergencyContact(self):
         while True:
             try:
@@ -119,7 +106,6 @@ class Patient(User):
                 print(f"Error: {e}")
 
     @staticmethod
-    @check_access
     def getUserAppointmentDate():
         currentYear = int(strftime("%Y", gmtime()))
         currentMonth = int(strftime("%m", gmtime()))
@@ -204,7 +190,6 @@ class Patient(User):
         appointmentDate = datetime(appointmentYear, appointmentMonth, appointmentDay)
         return appointmentDate
     
-    @check_access
     def bookAppointment(self):
         """
         Returns the time a patient wants an appointment for. No input paramaters required.
@@ -273,10 +258,7 @@ class Patient(User):
             if mhwpDatetime.date() == appointmentDate.date():
                 # Extract the hour from the datetime object and append it to the list
                 currentMHWPAppointments.append(mhwpDatetime.hour)
-        
-        
-
-      
+              
         # find potential times based on MHWP calendar
         potentialTimes = []
         while mhwpStart < mhwpFinish:
@@ -321,7 +303,6 @@ class Patient(User):
     
     # allow to send short message to MHWP for reason of appointment
     # email update
-    @check_access
     def bookSoonestAppointment(self):
         # automatically books the soonest available appointment starting from the next day.
         currentDate = datetime.now().date()
@@ -395,8 +376,7 @@ class Patient(User):
                     return finalDateTime
                 else:
                     nextDay += timedelta(days=1)
-
-    @check_access               
+    
     def emergencyAppointment(self):
         #Allows the patient to book an emergency appointment on the same day.
         currentDate = datetime.now().date()
@@ -471,8 +451,7 @@ class Patient(User):
                     print(f"Invalid choice. Please select a number between 1 and {len(availableTimes)}.")
             except ValueError:
                 print("Please enter a valid number.")
-    
-    @check_access
+        
     def cancelAppointment(self):
         if not self.patientCalendar:
             print("\n--- No appointments found ---")
@@ -500,8 +479,7 @@ class Patient(User):
                     print(f"Invalid choice. Please select a number between 1 and {len(appointments) + 1}.")
             except ValueError:
                 print("Invalid input. Please enter a valid number.")
-
-    @check_access
+    
     def getRecord(self):
         outputString = "{0} {1}".format(self.first_name,self.last_name)
         outputString += "-- Conditions --\n"
@@ -517,8 +495,7 @@ class Patient(User):
             outputString += ("{0}".format(indivdualNote[1]))
 
         print(outputString)
-
-    @check_access
+    
     def displayAllAppointments(self):
         if not self.patientCalendar:
             print("\n--- No appointments found ---")
@@ -530,8 +507,7 @@ class Patient(User):
             print(f"Appointment on [{date_str}] at time [{time_str}] with practitioner: {appointmentObject.mhwpInstance.first_name} {appointmentObject.mhwpInstance.last_name}")
 
 
-    @classmethod
-    @check_access
+    @classmethod    
     def searchExercises(cls):
         while True:
             search = input("\nPlease enter your search term or type '0' to quit: ")
@@ -551,8 +527,7 @@ class Patient(User):
                         break
                 else:
                     print("Sorry, we could not find any resources to match your search term. Some suggestions are 'mindfulness' or 'meditation'.")
-
-    @check_access
+    
     def export_appointments_to_ics(self, start_date, end_date):
         """
         Export the patient's confirmed appointments  within the specified date range to an .ics file.
@@ -567,8 +542,7 @@ class Patient(User):
             calendar_with_datetime[date_time] = appointment
         export_appointments_to_ics(self.patientCalendar, start_date, end_date, filename_prefix, is_mhwp=False)
 
-    # EXPORT APPOINTMENTS TO CALENDAR
-    @check_access
+    # EXPORT APPOINTMENTS TO CALENDAR    
     def cli_export_appointments(self):
         """
         CLI for exporting Patient's appointments to an ICS file.
@@ -587,8 +561,7 @@ class Patient(User):
 
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
-
-    @check_access
+    
     def show_all_journal_entries(self):
         if not self.journalEntries:
             print("\n--- No journal entries found ---")
@@ -599,8 +572,7 @@ class Patient(User):
                 print("Date/Time:", jour_entry["Date/Time"])
                 print("Journal Entry:", jour_entry["Journal Entry"])
                 print("---")
-    
-    @check_access
+        
     def search_journal_entries(self):
 
         # take a input of a keyword
