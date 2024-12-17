@@ -35,6 +35,7 @@ class MHWP(User):
             self.unavailable_periods = []  # Initialize if not already present
 
         self.unavailable_periods.append((start_datetime, end_datetime))
+        User.save_users()
         print(f"Unavailable period set from {start_date} to {end_date}.")
       
     def view_unavailable_periods(self):
@@ -106,6 +107,7 @@ class MHWP(User):
                 return
 
             self.unavailable_periods[period_index] = (start_datetime, end_datetime)
+            User.save_users()
             print(f"Unavailable period updated to {start_date} to {end_date}.")
         except ValueError:
             print("Invalid date format. Please enter the dates in YYYY-MM-DD format.")
@@ -113,6 +115,7 @@ class MHWP(User):
     def cancel_unavailable_period(self, period_index):
         """Cancel a specific unavailable period."""
         removed_period = self.unavailable_periods.pop(period_index)
+        User.save_users()
         print(f"Unavailable period from {removed_period[0].date()} to {removed_period[1].date()} canceled.")
     
     def cli_set_unavailable_period(self):
@@ -530,7 +533,7 @@ class MHWP(User):
         }
         reset_color = "\033[0m"  # Reset color to default
 
-        print("\n--- Patient Mood Tracker ---")
+        print("\n--- Patient Dashboard ---")
         print("-" * 30)
 
         # Prompt for start and end date

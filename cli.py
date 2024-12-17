@@ -339,9 +339,10 @@ def mhwp_menu(mhwp):
             print("3. Cancel Appointment")
             print("4. Handle Requests")
             print("5. Add Patient Notes/Conditions")
-            print("6. View Patient Mood Tracker Summary")
+            print("6. View Patient Summary")
             print("7. Export Appointments")
-            print("8. Logout")
+            print("8. Unavailable Periods")
+            print("9. Logout")
             choice = input("Select an option: ").strip()
 
             if choice == "1":
@@ -362,6 +363,8 @@ def mhwp_menu(mhwp):
             elif choice == "7":
                 mhwp.cli_export_appointments()
             elif choice == "8":
+                mhwp.cli_set_unavailable_period()
+            elif choice == "9":
                 User.logout()
                 break
             else:

@@ -3,6 +3,14 @@ from patient import Patient
 from mhwp import MHWP 
 from email_sender import send_email
 import pickle 
+import logging
+from datetime import datetime
+
+logging.basicConfig(
+    filename="application.log",    
+    level=logging.ERROR,           
+    format="%(asctime)s - %(levelname)s - %(message)s"  
+)
 
 
 class Appointment:
@@ -122,7 +130,7 @@ class Appointment:
                     mhwp.appointment_calendar[appointment_obj.date_time] = appointment_obj
 
         except FileNotFoundError:
-            print(f"No file called {file_name} has been found. Starting with an empty list.")
+            logging.error(f"No file called {file_name} has been found. Starting with an empty list.")
             Appointment.all_appointment_objects = []
         except Exception as e:
-            print(f"Error while loading appointments: {e}")
+            logging.error(f"Error while loading appointments: {e}")

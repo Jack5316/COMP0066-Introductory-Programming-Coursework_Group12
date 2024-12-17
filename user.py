@@ -1,5 +1,13 @@
 import re
 import pickle
+import logging
+from datetime import datetime
+
+logging.basicConfig(
+    filename="application.log",    
+    level=logging.ERROR,           
+    format="%(asctime)s - %(levelname)s - %(message)s"  
+)
 
 class User:
     user_dictionary = {}
@@ -12,7 +20,7 @@ class User:
             with open(file_name, "wb") as file:
                 pickle.dump((User.user_dictionary, User.all_user_objects), file)
         except Exception as e:
-            print(f"Error saving user data: {e}")
+            logging.error(f"Error saving user data: {e}")
 
     @staticmethod
     def load_users(file_name="users.pkl"):
@@ -20,9 +28,9 @@ class User:
             with open(file_name, "rb") as file:
                 User.user_dictionary, User.all_user_objects = pickle.load(file)
         except FileNotFoundError:
-            print(f"No user data file found ({file_name}). Starting fresh.")
+            logging.error(f"No user data file found ({file_name}). Starting fresh.")
         except Exception as e:
-            print(f"Error loading user data: {e}")
+            logging.error(f"Error loading user data: {e}")
 
     def __init__(self, first_name, last_name, email, user_type, username, password):
         username_clean = str(username).strip().lower()
